@@ -41,15 +41,15 @@ class _TextEditorState extends State<TextEditor> {
             itemCount: lineCount,
             itemBuilder:
                 (context, index) => Container(
-                  height: 24, // Синхронизация с высотой строки TextField
+                  height: 24,
                   alignment: Alignment.centerRight,
                   padding: const EdgeInsets.only(right: 8),
                   child: Text(
                     '${index + 1}',
                     style: const TextStyle(
-                      fontSize: 14, // Синхронизация со шрифтом TextField
+                      fontSize: 14,
                       color: Colors.grey,
-                      height: 1.5, // Учет межстрочного интервала
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -60,10 +60,7 @@ class _TextEditorState extends State<TextEditor> {
           child: TextField(
             maxLines: 10,
             scrollController: _scrollController,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              labelText: 'Содержимое входного файла',
-            ),
+            decoration: const InputDecoration(border: OutlineInputBorder()),
             style: const TextStyle(fontSize: 14, height: 1.5),
             onChanged: (value) {
               appState.updateEditorContent(value);
