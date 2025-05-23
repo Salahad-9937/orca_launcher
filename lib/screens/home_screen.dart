@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/app_state.dart';
 import '../services/file_service.dart';
-import '../widgets/directory_selector.dart';
 import '../widgets/text_editor.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -113,17 +112,6 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            DirectorySelector(
-              label: 'ORCA',
-              currentPath: appState.orcaDirectory,
-              onPathSelected: (path) => appState.setOrcaDirectory(path),
-            ),
-            DirectorySelector(
-              label: 'Рабочая',
-              currentPath: appState.workingDirectory,
-              onPathSelected: (path) => appState.setWorkingDirectory(path),
-            ),
-            const SizedBox(height: 16),
             const Text(
               'Редактор входного файла',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
