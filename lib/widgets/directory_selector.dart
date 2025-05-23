@@ -23,7 +23,7 @@ class DirectorySelector extends StatelessWidget {
         children: [
           Expanded(
             child: Text(
-              currentPath ?? 'No directory selected',
+              currentPath ?? 'Директория не выбрана',
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -33,7 +33,7 @@ class DirectorySelector extends StatelessWidget {
               final path = await fileService.pickDirectory();
               onPathSelected(path);
             },
-            child: Text('Select $label Directory'),
+            child: Text('Выбрать директорию $label'),
           ),
         ],
       ),

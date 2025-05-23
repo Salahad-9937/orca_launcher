@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'ORCA Input Generator',
       theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
-      debugShowCheckedModeBanner: false, // Удаляем метку debug
+      debugShowCheckedModeBanner: false,
       home: const HomeScreen(),
     );
   }
