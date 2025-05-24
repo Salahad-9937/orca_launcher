@@ -6,10 +6,10 @@ class SaveFileDialog extends StatefulWidget {
   const SaveFileDialog({super.key, required this.onSave});
 
   @override
-  _SaveFileDialogState createState() => _SaveFileDialogState();
+  SaveFileDialogState createState() => SaveFileDialogState();
 }
 
-class _SaveFileDialogState extends State<SaveFileDialog> {
+class SaveFileDialogState extends State<SaveFileDialog> {
   final TextEditingController _controller = TextEditingController();
   String? _errorText;
 

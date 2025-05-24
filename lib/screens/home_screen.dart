@@ -52,21 +52,25 @@ class HomeScreen extends StatelessWidget {
                                     path.split(Platform.pathSeparator).last,
                                   );
                                   appState.setCurrentFilePath(path);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'Файл открыт: ${appState.currentFileName}',
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Файл открыт: ${appState.currentFileName}',
+                                        ),
                                       ),
-                                    ),
-                                  );
+                                    );
+                                  }
                                 } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'Ошибка при открытии файла',
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Ошибка при открытии файла',
+                                        ),
                                       ),
-                                    ),
-                                  );
+                                    );
+                                  }
                                 }
                               },
                               isFilePicker: true,
@@ -96,19 +100,23 @@ class HomeScreen extends StatelessWidget {
                         appState.editorContent,
                       );
                       if (success) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Файл сохранён: ${appState.currentFileName}',
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Файл сохранён: ${appState.currentFileName}',
+                              ),
                             ),
-                          ),
-                        );
+                          );
+                        }
                       } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Ошибка при сохранении файла'),
-                          ),
-                        );
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Ошибка при сохранении файла'),
+                            ),
+                          );
+                        }
                       }
                     } else {
                       // Открываем экран для выбора директории и имени файла
@@ -128,21 +136,29 @@ class HomeScreen extends StatelessWidget {
                                     appState.setCurrentFilePath(
                                       path + Platform.pathSeparator + fileName,
                                     );
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          'Файл сохранён: $fileName',
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Файл сохранён: $fileName',
+                                          ),
                                         ),
-                                      ),
-                                    );
+                                      );
+                                    }
                                   } else {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'Ошибка при сохранении файла',
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'Ошибка при сохранении файла',
+                                          ),
                                         ),
-                                      ),
-                                    );
+                                      );
+                                    }
                                   }
                                 },
                                 initialPath:
@@ -176,19 +192,25 @@ class HomeScreen extends StatelessWidget {
                                   appState.setCurrentFilePath(
                                     path + Platform.pathSeparator + fileName,
                                   );
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('Файл сохранён: $fileName'),
-                                    ),
-                                  );
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'Ошибка при сохранении файла',
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Файл сохранён: $fileName',
+                                        ),
                                       ),
-                                    ),
-                                  );
+                                    );
+                                  }
+                                } else {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Ошибка при сохранении файла',
+                                        ),
+                                      ),
+                                    );
+                                  }
                                 }
                               },
                               initialPath:

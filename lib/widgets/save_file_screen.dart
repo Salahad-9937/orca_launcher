@@ -10,10 +10,10 @@ class SaveFileScreen extends StatefulWidget {
   const SaveFileScreen({super.key, required this.onSave, this.initialPath});
 
   @override
-  _SaveFileScreenState createState() => _SaveFileScreenState();
+  SaveFileScreenState createState() => SaveFileScreenState();
 }
 
-class _SaveFileScreenState extends State<SaveFileScreen> {
+class SaveFileScreenState extends State<SaveFileScreen> {
   String _currentPath = '';
   final TextEditingController _fileNameController = TextEditingController();
   String? _errorText;

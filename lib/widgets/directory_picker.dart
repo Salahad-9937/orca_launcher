@@ -16,10 +16,10 @@ class DirectoryPicker extends StatefulWidget {
   });
 
   @override
-  _DirectoryPickerState createState() => _DirectoryPickerState();
+  DirectoryPickerState createState() => DirectoryPickerState();
 }
 
-class _DirectoryPickerState extends State<DirectoryPicker> {
+class DirectoryPickerState extends State<DirectoryPicker> {
   String _currentPath = '';
 
   @override
@@ -66,7 +66,7 @@ class _DirectoryPickerState extends State<DirectoryPicker> {
         }).toList();
       } else {
         // Показываем только папки
-        return entities.where((entity) => entity is Directory).toList();
+        return entities.whereType<Directory>().toList();
       }
     } catch (e) {
       debugPrint('Error listing directory contents: $e');

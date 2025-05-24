@@ -7,10 +7,10 @@ class TextEditor extends StatefulWidget {
   const TextEditor({super.key});
 
   @override
-  _TextEditorState createState() => _TextEditorState();
+  TextEditorState createState() => TextEditorState();
 }
 
-class _TextEditorState extends State<TextEditor> {
+class TextEditorState extends State<TextEditor> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _textController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
