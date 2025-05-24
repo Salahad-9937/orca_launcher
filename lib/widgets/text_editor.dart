@@ -102,19 +102,18 @@ class _TextEditorState extends State<TextEditor> {
             },
           ),
         },
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Нумерация строк с начальным сдвигом
-            Column(
-              children: [
-                const SizedBox(height: 4), // Начальный сдвиг
-                Container(
-                  width: 40,
-                  color: Colors.grey[200],
-                  child: SingleChildScrollView(
-                    controller: _scrollController,
-                    physics: const NeverScrollableScrollPhysics(),
+        child: SingleChildScrollView(
+          controller: _scrollController,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Нумерация строк
+              Column(
+                children: [
+                  const SizedBox(height: 4), // Начальный сдвиг
+                  Container(
+                    width: 40,
+                    color: Colors.grey[200],
                     child: Column(
                       children: List.generate(
                         lineCount,
@@ -134,30 +133,36 @@ class _TextEditorState extends State<TextEditor> {
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
-            // Текстовый редактор
-            Expanded(
-              child: TextField(
-                controller: _textController,
-                focusNode: _focusNode,
-                maxLines: null,
-                expands: true,
-                textAlignVertical: TextAlignVertical.top, // Текст сверху
-                keyboardType: TextInputType.multiline,
-                textInputAction: TextInputAction.newline,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(
-                    vertical: 8,
-                    horizontal: 8,
+                ],
+              ),
+              // Текстовый редактор
+              Expanded(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: lineHeight * lineCount,
+                  ),
+                  child: TextField(
+                    controller: _textController,
+                    focusNode: _focusNode,
+                    maxLines: null,
+                    scrollPhysics:
+                        const NeverScrollableScrollPhysics(), // Отключаем прокрутку TextField
+                    textAlignVertical: TextAlignVertical.top,
+                    keyboardType: TextInputType.multiline,
+                    textInputAction: TextInputAction.newline,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(
+                        vertical: 8,
+                        horizontal: 8,
+                      ),
+                    ),
+                    style: textStyle,
                   ),
                 ),
-                style: textStyle,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
