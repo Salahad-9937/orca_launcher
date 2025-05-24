@@ -1,11 +1,19 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
 
 class DirectoryPicker extends StatefulWidget {
   final Function(String) onPathSelected;
+  final bool isFilePicker; // true для выбора файла, false для выбора директории
+  final String? initialPath; // Начальная директория
 
-  const DirectoryPicker({super.key, required this.onPathSelected});
+  const DirectoryPicker({
+    super.key,
+    required this.onPathSelected,
+    this.isFilePicker = false,
+    this.initialPath,
+  });
 
   @override
   _DirectoryPickerState createState() => _DirectoryPickerState();
@@ -21,33 +29,70 @@ class _DirectoryPickerState extends State<DirectoryPicker> {
   }
 
   Future<void> _initCurrentPath() async {
-    final directory = await getApplicationDocumentsDirectory();
+    String initialPath;
+    if (widget.initialPath != null) {
+      initialPath = widget.initialPath!;
+    } else {
+      if (Platform.isLinux) {
+        initialPath = Platform.environment['HOME'] ?? '/home';
+      } else if (Platform.isWindows) {
+        initialPath = 'C:\\';
+      } else {
+        initialPath = (await getApplicationDocumentsDirectory()).path;
+      }
+    }
     setState(() {
-      _currentPath = directory.path;
+      _currentPath = initialPath;
     });
   }
 
   Future<List<FileSystemEntity>> _getDirectoryContents(String path) async {
-    final dir = Directory(path);
-    return dir
-        .list(recursive: false)
-        .where((entity) => entity is Directory)
-        .toList();
+    try {
+      final dir = Directory(path);
+      if (!await dir.exists()) {
+        if (Platform.isWindows && path == 'C:\\') {
+          // Для Windows корневой директории проверяем доступность
+          return [];
+        }
+        return [];
+      }
+      final entities = await dir.list(recursive: false).toList();
+      if (widget.isFilePicker) {
+        // Показываем файлы .inp и папки
+        return entities.where((entity) {
+          if (entity is Directory) return true;
+          if (entity is File && entity.path.endsWith('.inp')) return true;
+          return false;
+        }).toList();
+      } else {
+        // Показываем только папки
+        return entities.where((entity) => entity is Directory).toList();
+      }
+    } catch (e) {
+      debugPrint('Error listing directory contents: $e');
+      return [];
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Выберите директорию: $_currentPath'),
+        title: Text(
+          widget.isFilePicker
+              ? 'Выберите файл: $_currentPath'
+              : 'Выберите директорию: $_currentPath',
+          overflow: TextOverflow.ellipsis,
+        ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.check),
-            onPressed: () {
-              widget.onPathSelected(_currentPath);
-              Navigator.of(context).pop();
-            },
-          ),
+          if (!widget.isFilePicker)
+            IconButton(
+              icon: const Icon(Icons.check),
+              onPressed: () {
+                widget.onPathSelected(_currentPath);
+                Navigator.of(context).pop();
+              },
+            ),
         ],
       ),
       body: FutureBuilder<List<FileSystemEntity>>(
@@ -59,9 +104,9 @@ class _DirectoryPickerState extends State<DirectoryPicker> {
           if (snapshot.hasError) {
             return Center(child: Text('Ошибка: ${snapshot.error}'));
           }
-          final directories = snapshot.data ?? [];
+          final entities = snapshot.data ?? [];
           return ListView.builder(
-            itemCount: directories.length + 1,
+            itemCount: entities.length + 1,
             itemBuilder: (context, index) {
               if (index == 0) {
                 return ListTile(
@@ -69,20 +114,28 @@ class _DirectoryPickerState extends State<DirectoryPicker> {
                   title: const Text('Назад'),
                   onTap: () {
                     final parentPath = Directory(_currentPath).parent.path;
-                    setState(() {
-                      _currentPath = parentPath;
-                    });
+                    // Предотвращаем выход за пределы корневой директории
+                    if (parentPath != _currentPath) {
+                      setState(() {
+                        _currentPath = parentPath;
+                      });
+                    }
                   },
                 );
               }
-              final dir = directories[index - 1];
+              final entity = entities[index - 1];
               return ListTile(
-                leading: const Icon(Icons.folder),
-                title: Text(dir.path.split('/').last),
+                leading: Icon(entity is File ? Icons.file_open : Icons.folder),
+                title: Text(path.basename(entity.path)),
                 onTap: () {
-                  setState(() {
-                    _currentPath = dir.path;
-                  });
+                  if (widget.isFilePicker && entity is File) {
+                    widget.onPathSelected(entity.path);
+                    Navigator.of(context).pop();
+                  } else if (entity is Directory) {
+                    setState(() {
+                      _currentPath = entity.path;
+                    });
+                  }
                 },
               );
             },

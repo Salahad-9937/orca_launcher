@@ -1,10 +1,12 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/app_state.dart';
 import '../services/file_service.dart';
 import '../widgets/text_editor.dart';
-import '../widgets/save_file_dialog.dart';
+import '../widgets/save_file_screen.dart';
 import '../widgets/directory_picker.dart';
+import '../screens/settings_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -26,35 +28,154 @@ class HomeScreen extends StatelessWidget {
                   onPressed: () {
                     appState.updateEditorContent('');
                     appState.setCurrentFileName('Безымянный');
+                    appState.setCurrentFilePath(null);
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Создан новый файл')),
                     );
                   },
-                  child: const Text('Новый'),
+                  child: const Text('Создать'),
+                ),
+                MenuItemButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) => DirectoryPicker(
+                              onPathSelected: (path) async {
+                                final content = await fileService.openFile(
+                                  path,
+                                );
+                                if (content != null) {
+                                  appState.updateEditorContent(content);
+                                  appState.setCurrentFileName(
+                                    path.split(Platform.pathSeparator).last,
+                                  );
+                                  appState.setCurrentFilePath(path);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Файл открыт: ${appState.currentFileName}',
+                                      ),
+                                    ),
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Ошибка при открытии файла',
+                                      ),
+                                    ),
+                                  );
+                                }
+                              },
+                              isFilePicker: true,
+                              initialPath:
+                                  appState.workingDirectory ??
+                                  (Platform.isLinux
+                                      ? Platform.environment['HOME'] ?? '/home'
+                                      : 'C:\\'),
+                            ),
+                      ),
+                    );
+                  },
+                  child: const Text('Открыть'),
                 ),
                 MenuItemButton(
                   onPressed: () async {
-                    if (appState.workingDirectory == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Сначала выберите рабочую директорию'),
+                    if (appState.currentFilePath != null) {
+                      // Сохраняем существующий файл
+                      final success = await fileService.saveFile(
+                        appState.currentFilePath!.substring(
+                          0,
+                          appState.currentFilePath!.lastIndexOf(
+                            Platform.pathSeparator,
+                          ),
+                        ),
+                        appState.currentFileName,
+                        appState.editorContent,
+                      );
+                      if (success) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Файл сохранён: ${appState.currentFileName}',
+                            ),
+                          ),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Ошибка при сохранении файла'),
+                          ),
+                        );
+                      }
+                    } else {
+                      // Открываем экран для выбора директории и имени файла
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder:
+                              (context) => SaveFileScreen(
+                                onSave: (path, fileName) async {
+                                  final success = await fileService.saveFile(
+                                    path,
+                                    fileName,
+                                    appState.editorContent,
+                                  );
+                                  if (success) {
+                                    appState.setCurrentFileName(fileName);
+                                    appState.setCurrentFilePath(
+                                      path + Platform.pathSeparator + fileName,
+                                    );
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Файл сохранён: $fileName',
+                                        ),
+                                      ),
+                                    );
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Ошибка при сохранении файла',
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                },
+                                initialPath:
+                                    appState.workingDirectory ??
+                                    (Platform.isLinux
+                                        ? Platform.environment['HOME'] ??
+                                            '/home'
+                                        : 'C:\\'),
+                              ),
                         ),
                       );
-                      return;
                     }
-                    showDialog(
-                      context: context,
-                      builder:
-                          (context) => SaveFileDialog(
-                            onSave: (fileName) async {
-                              final success = await fileService.saveFile(
-                                appState.workingDirectory!,
-                                fileName,
-                                appState.editorContent,
-                              );
-                              if (context.mounted) {
+                  },
+                  child: const Text('Сохранить'),
+                ),
+                MenuItemButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) => SaveFileScreen(
+                              onSave: (path, fileName) async {
+                                final success = await fileService.saveFile(
+                                  path,
+                                  fileName,
+                                  appState.editorContent,
+                                );
                                 if (success) {
                                   appState.setCurrentFileName(fileName);
+                                  appState.setCurrentFilePath(
+                                    path + Platform.pathSeparator + fileName,
+                                  );
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text('Файл сохранён: $fileName'),
@@ -69,58 +190,28 @@ class HomeScreen extends StatelessWidget {
                                     ),
                                   );
                                 }
-                              }
-                            },
-                          ),
+                              },
+                              initialPath:
+                                  appState.workingDirectory ??
+                                  (Platform.isLinux
+                                      ? Platform.environment['HOME'] ?? '/home'
+                                      : 'C:\\'),
+                            ),
+                      ),
                     );
                   },
-                  child: const Text('Сохранить'),
+                  child: const Text('Сохранить как'),
                 ),
                 MenuItemButton(
                   onPressed: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder:
-                            (context) => DirectoryPicker(
-                              onPathSelected: (path) {
-                                appState.setOrcaDirectory(path);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      'Выбрана директория ORCA: $path',
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
+                        builder: (context) => const SettingsScreen(),
                       ),
                     );
                   },
-                  child: const Text('Выбрать директорию ORCA'),
-                ),
-                MenuItemButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder:
-                            (context) => DirectoryPicker(
-                              onPathSelected: (path) {
-                                appState.setWorkingDirectory(path);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      'Выбрана рабочая директория: $path',
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                      ),
-                    );
-                  },
-                  child: const Text('Выбрать рабочую директорию'),
+                  child: const Text('Настройки'),
                 ),
                 MenuItemButton(
                   onPressed: () {
