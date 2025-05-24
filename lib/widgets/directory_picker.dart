@@ -24,6 +24,8 @@ class DirectoryPickerState extends State<DirectoryPicker> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   bool _showHidden = false; // Переключатель для скрытых файлов/папок
+  final TextEditingController _folderNameController = TextEditingController();
+  String? _folderErrorText;
 
   @override
   void initState() {
@@ -102,9 +104,80 @@ class DirectoryPickerState extends State<DirectoryPicker> {
     }
   }
 
+  // Диалоговое окно для создания новой папки
+  Future<void> _showCreateFolderDialog() async {
+    _folderNameController.clear();
+    _folderErrorText = null;
+
+    await showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Создать новую папку'),
+            content: TextField(
+              controller: _folderNameController,
+              decoration: InputDecoration(
+                labelText: 'Имя папки',
+                errorText: _folderErrorText,
+              ),
+              onChanged: (value) {
+                setState(() {
+                  _folderErrorText = null;
+                });
+              },
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Отмена'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  final folderName = _folderNameController.text.trim();
+                  if (folderName.isEmpty) {
+                    setState(() {
+                      _folderErrorText = 'Имя папки не может быть пустым';
+                    });
+                    return;
+                  }
+                  // Проверка недопустимых символов
+                  if (RegExp(r'[<>:"/\\|?*]').hasMatch(folderName)) {
+                    setState(() {
+                      _folderErrorText = 'Имя содержит недопустимые символы';
+                    });
+                    return;
+                  }
+                  try {
+                    final newFolderPath = p.join(_currentPath, folderName);
+                    final newFolder = Directory(newFolderPath);
+                    if (await newFolder.exists()) {
+                      setState(() {
+                        _folderErrorText = 'Папка уже существует';
+                      });
+                      return;
+                    }
+                    await newFolder.create();
+                    setState(() {}); // Обновляем список
+                    if (context.mounted) {
+                      Navigator.of(context).pop();
+                    }
+                  } catch (e) {
+                    setState(() {
+                      _folderErrorText = 'Ошибка при создании папки: $e';
+                    });
+                  }
+                },
+                child: const Text('Создать'),
+              ),
+            ],
+          ),
+    );
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
+    _folderNameController.dispose();
     super.dispose();
   }
 
@@ -128,6 +201,11 @@ class DirectoryPickerState extends State<DirectoryPicker> {
               },
             ),
           IconButton(
+            icon: const Icon(Icons.create_new_folder),
+            tooltip: 'Создать новую папку',
+            onPressed: _showCreateFolderDialog,
+          ),
+          IconButton(
             icon: Icon(_showHidden ? Icons.visibility : Icons.visibility_off),
             tooltip:
                 _showHidden ? 'Скрыть скрытые файлы' : 'Показать скрытые файлы',
@@ -138,7 +216,8 @@ class DirectoryPickerState extends State<DirectoryPicker> {
             },
           ),
           SizedBox(
-            width: 300, // Фиксированная ширина для поля поиска
+            width:
+                300, // Фиксированная ширина для поля поиска (по твоему запросу)
             child: Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 8.0,
