@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/app_state.dart';
-import '../services/file_service.dart';
+import '../widgets/directory_picker.dart';
 import '../widgets/text_editor.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -10,7 +10,6 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
-    final fileService = FileService();
 
     return Scaffold(
       appBar: AppBar(
@@ -32,7 +31,6 @@ class HomeScreen extends StatelessWidget {
                 ),
                 MenuItemButton(
                   onPressed: () async {
-                    // Логика сохранения будет добавлена позже
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('Функция сохранения пока не реализована'),
@@ -42,30 +40,48 @@ class HomeScreen extends StatelessWidget {
                   child: const Text('Сохранить'),
                 ),
                 MenuItemButton(
-                  onPressed: () async {
-                    final path = await fileService.pickDirectory();
-                    if (path != null) {
-                      appState.setOrcaDirectory(path);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Выбрана директория ORCA: $path'),
-                        ),
-                      );
-                    }
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) => DirectoryPicker(
+                              onPathSelected: (path) {
+                                appState.setOrcaDirectory(path);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Выбрана директория ORCA: $path',
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                      ),
+                    );
                   },
                   child: const Text('Выбрать директорию ORCA'),
                 ),
                 MenuItemButton(
-                  onPressed: () async {
-                    final path = await fileService.pickDirectory();
-                    if (path != null) {
-                      appState.setWorkingDirectory(path);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Выбрана рабочая директория: $path'),
-                        ),
-                      );
-                    }
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) => DirectoryPicker(
+                              onPathSelected: (path) {
+                                appState.setWorkingDirectory(path);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Выбрана рабочая директория: $path',
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                      ),
+                    );
                   },
                   child: const Text('Выбрать рабочую директорию'),
                 ),
