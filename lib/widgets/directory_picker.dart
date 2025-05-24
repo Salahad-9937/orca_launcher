@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as p; // Изменён префикс с path на p
+import 'package:path/path.dart' as p;
 
 class DirectoryPicker extends StatefulWidget {
   final Function(String) onPathSelected;
@@ -23,6 +23,7 @@ class DirectoryPickerState extends State<DirectoryPicker> {
   String _currentPath = '';
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  bool _showHidden = false; // Переключатель для скрытых файлов/папок
 
   @override
   void initState() {
@@ -77,14 +78,19 @@ class DirectoryPickerState extends State<DirectoryPicker> {
         filteredEntities = entities.whereType<Directory>().toList();
       }
 
+      // Фильтрация скрытых файлов/папок
+      if (!_showHidden) {
+        filteredEntities =
+            filteredEntities.where((entity) {
+              return !p.basename(entity.path).startsWith('.');
+            }).toList();
+      }
+
       // Фильтрация по поисковому запросу
       if (_searchQuery.isNotEmpty) {
         filteredEntities =
             filteredEntities.where((entity) {
-              final name =
-                  p
-                      .basename(entity.path)
-                      .toLowerCase(); // Используем p вместо path
+              final name = p.basename(entity.path).toLowerCase();
               return name.contains(_searchQuery);
             }).toList();
       }
@@ -121,81 +127,85 @@ class DirectoryPickerState extends State<DirectoryPicker> {
                 Navigator.of(context).pop();
               },
             ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Поле для поиска
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextField(
-              controller: _searchController,
-              decoration: const InputDecoration(
-                labelText: 'Поиск',
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(),
+          IconButton(
+            icon: Icon(_showHidden ? Icons.visibility : Icons.visibility_off),
+            tooltip:
+                _showHidden ? 'Скрыть скрытые файлы' : 'Показать скрытые файлы',
+            onPressed: () {
+              setState(() {
+                _showHidden = !_showHidden;
+              });
+            },
+          ),
+          SizedBox(
+            width: 300, // Фиксированная ширина для поля поиска
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 8.0,
+                vertical: 8.0,
+              ),
+              child: TextField(
+                controller: _searchController,
+                decoration: const InputDecoration(
+                  hintText: 'Поиск',
+                  prefixIcon: Icon(Icons.search),
+                  border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.symmetric(vertical: 0.0),
+                ),
               ),
             ),
           ),
-          // Список файлов и папок
-          Expanded(
-            child: FutureBuilder<List<FileSystemEntity>>(
-              future: _getDirectoryContents(_currentPath),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (snapshot.hasError) {
-                  return Center(child: Text('Ошибка: ${snapshot.error}'));
-                }
-                final entities = snapshot.data ?? [];
-                return ListView.builder(
-                  itemCount: entities.length + 1,
-                  itemBuilder: (context, index) {
-                    if (index == 0) {
-                      return ListTile(
-                        leading: const Icon(Icons.arrow_back),
-                        title: const Text('Назад'),
-                        onTap: () {
-                          final parentPath =
-                              Directory(_currentPath).parent.path;
-                          if (parentPath != _currentPath) {
-                            setState(() {
-                              _currentPath = parentPath;
-                              _searchController.clear();
-                              _searchQuery = '';
-                            });
-                          }
-                        },
-                      );
+        ],
+      ),
+      body: FutureBuilder<List<FileSystemEntity>>(
+        future: _getDirectoryContents(_currentPath),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(child: Text('Ошибка: ${snapshot.error}'));
+          }
+          final entities = snapshot.data ?? [];
+          return ListView.builder(
+            itemCount: entities.length + 1,
+            itemBuilder: (context, index) {
+              if (index == 0) {
+                return ListTile(
+                  leading: const Icon(Icons.arrow_back),
+                  title: const Text('Назад'),
+                  onTap: () {
+                    final parentPath = Directory(_currentPath).parent.path;
+                    if (parentPath != _currentPath) {
+                      setState(() {
+                        _currentPath = parentPath;
+                        _searchController.clear();
+                        _searchQuery = '';
+                      });
                     }
-                    final entity = entities[index - 1];
-                    return ListTile(
-                      leading: Icon(
-                        entity is File ? Icons.file_open : Icons.folder,
-                      ),
-                      title: Text(
-                        p.basename(entity.path),
-                      ), // Используем p вместо path
-                      onTap: () {
-                        if (widget.isFilePicker && entity is File) {
-                          widget.onPathSelected(entity.path);
-                          Navigator.of(context).pop();
-                        } else if (entity is Directory) {
-                          setState(() {
-                            _currentPath = entity.path;
-                            _searchController.clear();
-                            _searchQuery = '';
-                          });
-                        }
-                      },
-                    );
                   },
                 );
-              },
-            ),
-          ),
-        ],
+              }
+              final entity = entities[index - 1];
+              return ListTile(
+                leading: Icon(entity is File ? Icons.file_open : Icons.folder),
+                title: Text(p.basename(entity.path)),
+                onTap: () {
+                  if (widget.isFilePicker && entity is File) {
+                    widget.onPathSelected(entity.path);
+                    Navigator.of(context).pop();
+                  } else if (entity is Directory) {
+                    setState(() {
+                      _currentPath = entity.path;
+                      _searchController.clear();
+                      _searchQuery = '';
+                    });
+                  }
+                },
+              );
+            },
+          );
+        },
       ),
     );
   }
