@@ -1,10 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as path;
+import 'package:path/path.dart' as p; // Изменён префикс
 
 class SaveFileScreen extends StatefulWidget {
-  final Function(String, String) onSave; // Передаёт путь и имя файла
+  final Function(String, String) onSave;
   final String? initialPath;
 
   const SaveFileScreen({super.key, required this.onSave, this.initialPath});
@@ -153,7 +153,9 @@ class SaveFileScreenState extends State<SaveFileScreen> {
                     final entity = entities[index - 1];
                     return ListTile(
                       leading: const Icon(Icons.folder),
-                      title: Text(path.basename(entity.path)),
+                      title: Text(
+                        p.basename(entity.path),
+                      ), // Используем p вместо path
                       onTap: () {
                         setState(() {
                           _currentPath = entity.path;
