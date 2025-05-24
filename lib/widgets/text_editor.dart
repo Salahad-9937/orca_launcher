@@ -23,14 +23,32 @@ class _TextEditorState extends State<TextEditor> {
     _textController.addListener(() {
       appState.updateEditorContent(_textController.text);
     });
+
+    // Слушаем изменения в AppState.editorContent
+    appState.addListener(_updateTextController);
   }
 
   @override
   void dispose() {
+    // Удаляем слушатель
+    final appState = Provider.of<AppState>(context, listen: false);
+    appState.removeListener(_updateTextController);
     _textController.dispose();
     _scrollController.dispose();
     _focusNode.dispose();
     super.dispose();
+  }
+
+  // Обновляем TextEditingController при изменении AppState.editorContent
+  void _updateTextController() {
+    final appState = Provider.of<AppState>(context, listen: false);
+    if (_textController.text != appState.editorContent) {
+      _textController.text = appState.editorContent;
+      // Сбрасываем выделение, чтобы избежать ошибок
+      _textController.selection = TextSelection.collapsed(
+        offset: _textController.text.length,
+      );
+    }
   }
 
   // Обработчик клавиш Home и End
@@ -145,8 +163,7 @@ class _TextEditorState extends State<TextEditor> {
                     controller: _textController,
                     focusNode: _focusNode,
                     maxLines: null,
-                    scrollPhysics:
-                        const NeverScrollableScrollPhysics(), // Отключаем прокрутку TextField
+                    scrollPhysics: const NeverScrollableScrollPhysics(),
                     textAlignVertical: TextAlignVertical.top,
                     keyboardType: TextInputType.multiline,
                     textInputAction: TextInputAction.newline,
