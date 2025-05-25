@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../core/models/editor_state.dart';
+import '../../../core/widgets/custom_text_field.dart'; // Новый импорт
 import '../components/line_number_column.dart';
 
 class TextEditor extends StatefulWidget {
@@ -58,32 +58,6 @@ class TextEditorState extends State<TextEditor> {
     }
   }
 
-  void _handleKeyEvent(LogicalKeyboardKey key) {
-    if (!_focusNode.hasFocus) return;
-
-    final text = _textController.text;
-    final selection = _textController.selection;
-    final lines = text.isEmpty ? [''] : text.split('\n');
-    int currentLineIndex = 0;
-    int charCount = 0;
-
-    for (int i = 0; i < lines.length; i++) {
-      if (charCount + lines[i].length >= selection.baseOffset) {
-        currentLineIndex = i;
-        break;
-      }
-      charCount += lines[i].length + 1;
-    }
-
-    if (key == LogicalKeyboardKey.home) {
-      final startOfLine = charCount;
-      _textController.selection = TextSelection.collapsed(offset: startOfLine);
-    } else if (key == LogicalKeyboardKey.end) {
-      final endOfLine = charCount + lines[currentLineIndex].length;
-      _textController.selection = TextSelection.collapsed(offset: endOfLine);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final editorState = Provider.of<EditorState>(context);
@@ -104,72 +78,42 @@ class TextEditorState extends State<TextEditor> {
       return textPainter.height / 2;
     }();
 
-    return Shortcuts(
-      shortcuts: {
-        LogicalKeySet(LogicalKeyboardKey.home): const HomeIntent(),
-        LogicalKeySet(LogicalKeyboardKey.end): const EndIntent(),
-      },
-      child: Actions(
-        actions: {
-          HomeIntent: CallbackAction<HomeIntent>(
-            onInvoke: (intent) {
-              _handleKeyEvent(LogicalKeyboardKey.home);
-              return null;
-            },
+    return SingleChildScrollView(
+      controller: _scrollController,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          LineNumberColumn(
+            lineCount: _lineCount!,
+            lineHeight: _lineHeight!,
+            textStyle: textStyle,
           ),
-          EndIntent: CallbackAction<EndIntent>(
-            onInvoke: (intent) {
-              _handleKeyEvent(LogicalKeyboardKey.end);
-              return null;
-            },
-          ),
-        },
-        child: SingleChildScrollView(
-          controller: _scrollController,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              LineNumberColumn(
-                lineCount: _lineCount!,
-                lineHeight: _lineHeight!,
-                textStyle: textStyle,
+          Expanded(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: _lineHeight! * _lineCount!,
               ),
-              Expanded(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minHeight: _lineHeight! * _lineCount!,
-                  ),
-                  child: TextField(
-                    controller: _textController,
-                    focusNode: _focusNode,
-                    maxLines: null,
-                    scrollPhysics: const NeverScrollableScrollPhysics(),
-                    textAlignVertical: TextAlignVertical.top,
-                    keyboardType: TextInputType.multiline,
-                    textInputAction: TextInputAction.newline,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(
-                        vertical: 8,
-                        horizontal: 8,
-                      ),
-                    ),
-                    style: textStyle,
+              child: CustomTextField(
+                controller: _textController,
+                focusNode: _focusNode,
+                maxLines: null,
+                scrollPhysics: const NeverScrollableScrollPhysics(),
+                textAlignVertical: TextAlignVertical.top,
+                keyboardType: TextInputType.multiline,
+                textInputAction: TextInputAction.newline,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.symmetric(
+                    vertical: 8,
+                    horizontal: 8,
                   ),
                 ),
+                style: textStyle,
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
-}
-
-class HomeIntent extends Intent {
-  const HomeIntent();
-}
-
-class EndIntent extends Intent {
-  const EndIntent();
 }

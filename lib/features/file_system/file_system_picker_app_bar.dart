@@ -1,7 +1,7 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:rxdart/rxdart.dart';
+import '../../core/widgets/custom_text_field.dart'; // Новый импорт
 
 class FileSystemPickerAppBar extends StatefulWidget
     implements PreferredSizeWidget {
@@ -91,7 +91,7 @@ class FileSystemPickerAppBarState extends State<FileSystemPickerAppBar> {
           width: 300,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
-            child: TextField(
+            child: CustomTextField(
               controller: _searchController,
               decoration: const InputDecoration(
                 hintText: 'Поиск',

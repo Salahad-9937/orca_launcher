@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
+import '../../core/widgets/custom_text_field.dart'; // Новый импорт
 
 class CreateFolderDialog extends StatefulWidget {
   final String currentPath;
@@ -30,7 +31,7 @@ class CreateFolderDialogState extends State<CreateFolderDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('Создать новую папку'),
-      content: TextField(
+      content: CustomTextField(
         controller: _folderNameController,
         decoration: InputDecoration(
           labelText: 'Имя папки',

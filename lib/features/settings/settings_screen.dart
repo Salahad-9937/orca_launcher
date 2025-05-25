@@ -1,7 +1,8 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
+import 'dart:io';
 import 'package:provider/provider.dart';
 import '../../core/models/directory_state.dart';
+import '../../core/widgets/custom_text_field.dart'; // Новый импорт
 import '../file_system/file_system_picker.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -41,7 +42,7 @@ class SettingsScreenState extends State<SettingsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextField(
+            CustomTextField(
               controller: _orcaController,
               decoration: InputDecoration(
                 labelText: 'Директория ORCA',
@@ -73,7 +74,7 @@ class SettingsScreenState extends State<SettingsScreen> {
               },
             ),
             const SizedBox(height: 16),
-            TextField(
+            CustomTextField(
               controller: _workingController,
               decoration: InputDecoration(
                 labelText: 'Рабочая директория',

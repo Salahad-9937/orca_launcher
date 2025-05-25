@@ -6,7 +6,8 @@ import '../../core/models/directory_state.dart';
 import '../../core/utils/file_utils.dart';
 import '../../core/utils/error_display.dart';
 import '../../core/services/file_handler.dart';
-import 'file_system_picker.dart';
+import '../../core/widgets/custom_text_field.dart'; // Новый импорт
+import '../file_system/file_system_picker.dart';
 
 class SaveFileScreen extends StatefulWidget {
   final Function(String, String) onSave;
@@ -88,7 +89,7 @@ class SaveFileScreenState extends State<SaveFileScreen> {
             child: Row(
               children: [
                 Expanded(
-                  child: TextField(
+                  child: CustomTextField(
                     controller: _fileNameController,
                     decoration: InputDecoration(
                       labelText: 'Имя файла (с .inp)',
