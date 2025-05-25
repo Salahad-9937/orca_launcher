@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../models/editor_state.dart';
+import 'line_number_column.dart';
 
 class TextEditor extends StatefulWidget {
   const TextEditor({super.key});
@@ -15,6 +16,7 @@ class TextEditorState extends State<TextEditor> {
   final TextEditingController _textController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   late EditorState _editorState;
+  int? _lineCount; // Кэш для количества строк
 
   @override
   void initState() {
@@ -23,6 +25,7 @@ class TextEditorState extends State<TextEditor> {
     _textController.text = _editorState.editorContent;
     _textController.addListener(() {
       _editorState.updateEditorContent(_textController.text);
+      _lineCount = null; // Сбрасываем кэш при изменении текста
     });
 
     _editorState.addListener(_updateTextController);
@@ -49,6 +52,7 @@ class TextEditorState extends State<TextEditor> {
       _textController.selection = TextSelection.collapsed(
         offset: _textController.text.length,
       );
+      _lineCount = null; // Сбрасываем кэш при обновлении контента
     }
   }
 
@@ -81,7 +85,8 @@ class TextEditorState extends State<TextEditor> {
   @override
   Widget build(BuildContext context) {
     final editorState = Provider.of<EditorState>(context);
-    int lineCount =
+    // Мемоизация количества строк
+    _lineCount ??=
         editorState.editorContent.isEmpty
             ? 1
             : editorState.editorContent.split('\n').length;
@@ -119,37 +124,15 @@ class TextEditorState extends State<TextEditor> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Column(
-                children: [
-                  const SizedBox(height: 4),
-                  Container(
-                    width: 40,
-                    color: Colors.grey[200],
-                    child: Column(
-                      children: List.generate(
-                        lineCount,
-                        (index) => SizedBox(
-                          height: lineHeight,
-                          child: Align(
-                            alignment: Alignment.centerRight,
-                            child: Padding(
-                              padding: const EdgeInsets.only(right: 8),
-                              child: Text(
-                                '${index + 1}',
-                                style: textStyle.copyWith(color: Colors.grey),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+              LineNumberColumn(
+                lineCount: _lineCount!,
+                lineHeight: lineHeight,
+                textStyle: textStyle,
               ),
               Expanded(
                 child: ConstrainedBox(
                   constraints: BoxConstraints(
-                    minHeight: lineHeight * lineCount,
+                    minHeight: lineHeight * _lineCount!,
                   ),
                   child: TextField(
                     controller: _textController,
