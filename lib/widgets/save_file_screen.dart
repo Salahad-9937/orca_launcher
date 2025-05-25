@@ -6,7 +6,7 @@ import '../models/directory_state.dart';
 import '../utils/file_utils.dart';
 import '../utils/error_display.dart';
 import '../services/file_handler.dart';
-import '../widgets/file_system_picker.dart';
+import 'file_system/file_system_picker.dart';
 
 class SaveFileScreen extends StatefulWidget {
   final Function(String, String) onSave;

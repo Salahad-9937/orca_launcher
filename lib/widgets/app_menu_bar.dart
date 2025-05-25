@@ -6,7 +6,7 @@ import '../models/directory_state.dart';
 import '../utils/error_display.dart';
 import '../services/file_handler.dart';
 import '../widgets/save_file_screen.dart';
-import '../widgets/file_system_picker.dart';
+import '../widgets/file_system/file_system_picker.dart';
 import '../screens/settings_screen.dart';
 
 class AppMenuBar extends StatelessWidget {

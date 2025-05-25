@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../widgets/file_system_picker.dart';
+import 'file_system/file_system_picker.dart';
 
 class DirectoryPicker extends StatelessWidget {
   final Function(String) onPathSelected;
