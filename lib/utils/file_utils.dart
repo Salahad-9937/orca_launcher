@@ -1,9 +1,11 @@
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 
 class FileUtils {
+  /// Возвращает начальный путь для выбора директории или файла.
   static Future<String> getInitialPath(String? providedPath) async {
     if (providedPath != null) {
       return providedPath;
@@ -17,11 +19,20 @@ class FileUtils {
     }
   }
 
+  /// Возвращает содержимое директории с учётом фильтров и пагинации.
+  /// [path] - путь к директории.
+  /// [isFilePicker] - если true, показывать файлы .inp и папки, иначе только папки.
+  /// [showHidden] - показывать скрытые файлы/папки.
+  /// [searchQuery] - поисковый запрос для фильтрации.
+  /// [page] - номер страницы для пагинации.
+  /// [pageSize] - количество элементов на странице.
   static Future<List<FileSystemEntity>> getDirectoryContents(
     String path, {
     bool isFilePicker = false,
     bool showHidden = false,
     String searchQuery = '',
+    int page = 0,
+    int pageSize = 50,
   }) async {
     try {
       final dir = Directory(path);
@@ -35,7 +46,6 @@ class FileUtils {
       List<FileSystemEntity> filteredEntities;
 
       if (isFilePicker) {
-        // Показываем файлы .inp и папки
         filteredEntities =
             entities.where((entity) {
               if (entity is Directory) return true;
@@ -43,11 +53,9 @@ class FileUtils {
               return false;
             }).toList();
       } else {
-        // Показываем только папки
         filteredEntities = entities.whereType<Directory>().toList();
       }
 
-      // Фильтрация скрытых файлов/папок
       if (!showHidden) {
         filteredEntities =
             filteredEntities.where((entity) {
@@ -55,7 +63,6 @@ class FileUtils {
             }).toList();
       }
 
-      // Фильтрация по поисковому запросу
       if (searchQuery.isNotEmpty) {
         filteredEntities =
             filteredEntities.where((entity) {
@@ -64,7 +71,13 @@ class FileUtils {
             }).toList();
       }
 
-      return filteredEntities;
+      // Пагинация
+      final startIndex = page * pageSize;
+      final endIndex = min(startIndex + pageSize, filteredEntities.length);
+      if (startIndex >= filteredEntities.length) {
+        return [];
+      }
+      return filteredEntities.sublist(startIndex, endIndex);
     } catch (e) {
       if (kDebugMode) {
         print('Error listing directory contents: $e');
@@ -74,7 +87,6 @@ class FileUtils {
   }
 
   /// Проверяет имя файла на валидность.
-  /// Возвращает null, если имя валидно, или сообщение об ошибке.
   static String? validateFileName(String fileName) {
     if (fileName.isEmpty) {
       return 'Имя файла не может быть пустым';

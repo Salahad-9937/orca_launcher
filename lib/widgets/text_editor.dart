@@ -17,6 +17,7 @@ class TextEditorState extends State<TextEditor> {
   final FocusNode _focusNode = FocusNode();
   late EditorState _editorState;
   int? _lineCount; // Кэш для количества строк
+  double? _lineHeight; // Кэш для высоты строки
 
   @override
   void initState() {
@@ -35,6 +36,7 @@ class TextEditorState extends State<TextEditor> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     _editorState = Provider.of<EditorState>(context, listen: false);
+    _lineHeight = null; // Сбрасываем кэш при изменении зависимостей
   }
 
   @override
@@ -93,11 +95,14 @@ class TextEditorState extends State<TextEditor> {
 
     const textStyle = TextStyle(fontSize: 14, height: 1.5);
 
-    final textPainter = TextPainter(
-      text: const TextSpan(text: 'Sample\nSample', style: textStyle),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    final lineHeight = textPainter.height / 2;
+    // Мемоизация высоты строки
+    _lineHeight ??= () {
+      final textPainter = TextPainter(
+        text: const TextSpan(text: 'Sample\nSample', style: textStyle),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      return textPainter.height / 2;
+    }();
 
     return Shortcuts(
       shortcuts: {
@@ -126,13 +131,13 @@ class TextEditorState extends State<TextEditor> {
             children: [
               LineNumberColumn(
                 lineCount: _lineCount!,
-                lineHeight: lineHeight,
+                lineHeight: _lineHeight!,
                 textStyle: textStyle,
               ),
               Expanded(
                 child: ConstrainedBox(
                   constraints: BoxConstraints(
-                    minHeight: lineHeight * _lineCount!,
+                    minHeight: _lineHeight! * _lineCount!,
                   ),
                   child: TextField(
                     controller: _textController,
