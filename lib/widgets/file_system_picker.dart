@@ -224,9 +224,9 @@ class FileSystemPickerState extends State<FileSystemPicker> {
                       _searchController.clear();
                       _searchQuery = '';
                     });
-                    widget.onPathSelected(
-                      entity.path,
-                    ); // Обновляем путь при выборе директории
+                    if (!widget.isFilePicker) {
+                      widget.onPathSelected(entity.path);
+                    }
                   }
                 },
               );

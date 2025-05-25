@@ -7,6 +7,8 @@ class FileService {
     return null;
   }
 
+  /// Сохраняет файл с указанным именем и содержимым в заданной директории.
+  /// Возвращает [true] при успехе, [false] при ошибке.
   Future<bool> saveFile(String path, String fileName, String content) async {
     try {
       final file = File('$path/$fileName');
@@ -29,21 +31,25 @@ class FileService {
     }
   }
 
+  /// Открывает файл по указанному пути и возвращает его содержимое.
+  /// Возвращает [null], если путь не указывает на существующий файл.
   Future<String?> openFile(String path) async {
     try {
       final file = File(path);
-      if (await file.exists()) {
-        final content = await file.readAsString();
-        if (kDebugMode) {
-          print('File opened: $path');
-        }
-        return content;
-      } else {
-        if (kDebugMode) {
+      // Проверяем, является ли путь файлом
+      if (!await file.exists()) {
+        if (kDebugMode && await Directory(path).exists()) {
+          print('Path is a directory, not a file: $path');
+        } else if (kDebugMode) {
           print('File does not exist: $path');
         }
         return null;
       }
+      final content = await file.readAsString();
+      if (kDebugMode) {
+        print('File opened: $path');
+      }
+      return content;
     } catch (e) {
       if (kDebugMode) {
         print('Error opening file: $e');
