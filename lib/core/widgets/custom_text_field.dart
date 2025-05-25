@@ -39,6 +39,9 @@ class CustomTextField extends StatefulWidget {
 class CustomTextFieldState extends State<CustomTextField> {
   late TextEditingController _effectiveController;
   late FocusNode _effectiveFocusNode;
+  late ScrollController _scrollController;
+  final _startKey = GlobalKey(); // Ключ для начала текста
+  final _endKey = GlobalKey(); // Ключ для конца текста
 
   @override
   void initState() {
@@ -47,6 +50,8 @@ class CustomTextFieldState extends State<CustomTextField> {
     _effectiveController = widget.controller ?? TextEditingController();
     // Используем переданную ноду фокуса или создаём новую
     _effectiveFocusNode = widget.focusNode ?? FocusNode();
+    // Создаём контроллер прокрутки
+    _scrollController = ScrollController();
   }
 
   @override
@@ -58,7 +63,32 @@ class CustomTextFieldState extends State<CustomTextField> {
     if (widget.focusNode == null) {
       _effectiveFocusNode.dispose();
     }
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  // Прокрутка к позиции курсора
+  void _scrollToCursor(int cursorPosition) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Даём время на рендеринг
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (!mounted) return;
+
+        final isStart = cursorPosition == 0;
+        final key = isStart ? _startKey : _endKey;
+
+        if (key.currentContext == null) {
+          return;
+        }
+
+        Scrollable.ensureVisible(
+          key.currentContext!,
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+          alignment: isStart ? 0.0 : 1.0, // 0.0 для начала, 1.0 для конца
+        );
+      });
+    });
   }
 
   // Метод для обработки нажатий клавиш
@@ -73,6 +103,7 @@ class CustomTextFieldState extends State<CustomTextField> {
     if (offset < 0 || offset > text.length) {
       offset = text.isEmpty ? 0 : text.length;
       _effectiveController.selection = TextSelection.collapsed(offset: offset);
+      _scrollToCursor(offset); // Прокрутка при коррекции позиции
       return KeyEventResult.handled;
     }
 
@@ -99,9 +130,6 @@ class CustomTextFieldState extends State<CustomTextField> {
         );
 
     // Отладочный вывод для отслеживания нажатий
-    // print(
-    //   'Key: ${event.logicalKey}, Shift: $isShiftPressed, Offset: $offset, Line: $currentLineIndex, CharCount: $charCount',
-    // );
 
     // Проверяем, зажат ли Shift для выделения текста
     final int anchor = selection.baseOffset; // Точка начала выделения
@@ -135,6 +163,7 @@ class CustomTextFieldState extends State<CustomTextField> {
           isShiftPressed
               ? TextSelection(baseOffset: anchor, extentOffset: newOffset)
               : TextSelection.collapsed(offset: newOffset);
+      _scrollToCursor(newOffset); // Прокрутка к началу текста
       return KeyEventResult.handled;
     }
     // Обработка PageDown и Numpad 3 (PageDown)
@@ -145,6 +174,7 @@ class CustomTextFieldState extends State<CustomTextField> {
           isShiftPressed
               ? TextSelection(baseOffset: anchor, extentOffset: newOffset)
               : TextSelection.collapsed(offset: newOffset);
+      _scrollToCursor(newOffset); // Прокрутка к концу текста
       return KeyEventResult.handled;
     }
 
@@ -155,23 +185,39 @@ class CustomTextFieldState extends State<CustomTextField> {
   Widget build(BuildContext context) {
     return Focus(
       onKeyEvent: _handleKeyEvent, // Перехватываем события клавиш
-      child: TextField(
-        controller: _effectiveController,
-        focusNode: _effectiveFocusNode,
-        decoration: widget.decoration, // Передаём декорацию
-        style: widget.style, // Передаём стиль текста
-        autofocus: widget.autofocus, // Передаём автофокус
-        keyboardType:
-            widget.keyboardType ??
-            TextInputType.multiline, // По умолчанию multiline
-        textInputAction: widget.textInputAction, // Передаём действие клавиатуры
-        onChanged: widget.onChanged, // Передаём коллбэк при изменении
-        maxLines:
-            widget
-                .maxLines, // Передаём maxLines, по умолчанию null (без ограничений)
-        scrollPhysics: widget.scrollPhysics, // Передаём физику скролла
-        textAlignVertical:
-            widget.textAlignVertical, // Передаём вертикальное выравнивание
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return Stack(
+            children: [
+              TextField(
+                controller: _effectiveController,
+                focusNode: _effectiveFocusNode,
+                decoration: widget.decoration,
+                style: widget.style,
+                autofocus: widget.autofocus,
+                keyboardType: widget.keyboardType ?? TextInputType.multiline,
+                textInputAction: widget.textInputAction,
+                onChanged: widget.onChanged,
+                maxLines: widget.maxLines,
+                scrollPhysics: widget.scrollPhysics,
+                textAlignVertical: widget.textAlignVertical,
+                scrollController: _scrollController,
+              ),
+              // Невидимый виджет для начала текста
+              Positioned(
+                left: 0,
+                top: 0,
+                child: SizedBox(key: _startKey, width: 0, height: 0),
+              ),
+              // Невидимый виджет для конца текста
+              Positioned(
+                left: 0,
+                top: constraints.maxHeight,
+                child: SizedBox(key: _endKey, width: 0, height: 0),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
