@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import '../models/app_state.dart';
+import '../models/editor_state.dart';
 
 class TextEditor extends StatefulWidget {
   const TextEditor({super.key});
@@ -18,40 +18,35 @@ class TextEditorState extends State<TextEditor> {
   @override
   void initState() {
     super.initState();
-    final appState = Provider.of<AppState>(context, listen: false);
-    _textController.text = appState.editorContent;
+    final editorState = Provider.of<EditorState>(context, listen: false);
+    _textController.text = editorState.editorContent;
     _textController.addListener(() {
-      appState.updateEditorContent(_textController.text);
+      editorState.updateEditorContent(_textController.text);
     });
 
-    // Слушаем изменения в AppState.editorContent
-    appState.addListener(_updateTextController);
+    editorState.addListener(_updateTextController);
   }
 
   @override
   void dispose() {
-    // Удаляем слушатель
-    final appState = Provider.of<AppState>(context, listen: false);
-    appState.removeListener(_updateTextController);
+    final editorState = Provider.of<EditorState>(context, listen: false);
+    editorState.removeListener(_updateTextController);
     _textController.dispose();
     _scrollController.dispose();
     _focusNode.dispose();
     super.dispose();
   }
 
-  // Обновляем TextEditingController при изменении AppState.editorContent
   void _updateTextController() {
-    final appState = Provider.of<AppState>(context, listen: false);
-    if (_textController.text != appState.editorContent) {
-      _textController.text = appState.editorContent;
-      // Сбрасываем выделение, чтобы избежать ошибок
+    final editorState = Provider.of<EditorState>(context, listen: false);
+    if (_textController.text != editorState.editorContent) {
+      _textController.text = editorState.editorContent;
       _textController.selection = TextSelection.collapsed(
         offset: _textController.text.length,
       );
     }
   }
 
-  // Обработчик клавиш Home и End
   void _handleKeyEvent(LogicalKeyboardKey key) {
     if (!_focusNode.hasFocus) return;
 
@@ -61,7 +56,6 @@ class TextEditorState extends State<TextEditor> {
     int currentLineIndex = 0;
     int charCount = 0;
 
-    // Находим текущую строку
     for (int i = 0; i < lines.length; i++) {
       if (charCount + lines[i].length >= selection.baseOffset) {
         currentLineIndex = i;
@@ -71,11 +65,9 @@ class TextEditorState extends State<TextEditor> {
     }
 
     if (key == LogicalKeyboardKey.home) {
-      // Перемещение в начало текущей строки
       final startOfLine = charCount;
       _textController.selection = TextSelection.collapsed(offset: startOfLine);
     } else if (key == LogicalKeyboardKey.end) {
-      // Перемещение в конец текущей строки
       final endOfLine = charCount + lines[currentLineIndex].length;
       _textController.selection = TextSelection.collapsed(offset: endOfLine);
     }
@@ -83,22 +75,19 @@ class TextEditorState extends State<TextEditor> {
 
   @override
   Widget build(BuildContext context) {
-    final appState = Provider.of<AppState>(context);
-    // Подсчет количества строк
+    final editorState = Provider.of<EditorState>(context);
     int lineCount =
-        appState.editorContent.isEmpty
+        editorState.editorContent.isEmpty
             ? 1
-            : appState.editorContent.split('\n').length;
+            : editorState.editorContent.split('\n').length;
 
-    // Определение стиля текста
     const textStyle = TextStyle(fontSize: 14, height: 1.5);
 
-    // Вычисление точной высоты строки с помощью TextPainter
     final textPainter = TextPainter(
       text: const TextSpan(text: 'Sample\nSample', style: textStyle),
       textDirection: TextDirection.ltr,
     )..layout();
-    final lineHeight = textPainter.height / 2; // Делим на 2, так как 2 строки
+    final lineHeight = textPainter.height / 2;
 
     return Shortcuts(
       shortcuts: {
@@ -125,10 +114,9 @@ class TextEditorState extends State<TextEditor> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Нумерация строк
               Column(
                 children: [
-                  const SizedBox(height: 4), // Начальный сдвиг
+                  const SizedBox(height: 4),
                   Container(
                     width: 40,
                     color: Colors.grey[200],
@@ -153,7 +141,6 @@ class TextEditorState extends State<TextEditor> {
                   ),
                 ],
               ),
-              // Текстовый редактор
               Expanded(
                 child: ConstrainedBox(
                   constraints: BoxConstraints(
@@ -186,7 +173,6 @@ class TextEditorState extends State<TextEditor> {
   }
 }
 
-// Интенты для Home и End
 class HomeIntent extends Intent {
   const HomeIntent();
 }

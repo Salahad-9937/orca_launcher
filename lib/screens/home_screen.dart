@@ -1,11 +1,12 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../models/app_state.dart';
+import '../models/editor_state.dart';
+import '../models/directory_state.dart';
 import '../services/file_service.dart';
 import '../widgets/text_editor.dart';
 import '../widgets/save_file_screen.dart';
-import '../widgets/directory_picker.dart';
+import '../widgets/file_system_picker.dart';
 import '../screens/settings_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -13,12 +14,13 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final appState = Provider.of<AppState>(context);
+    final editorState = Provider.of<EditorState>(context);
+    final directoryState = Provider.of<DirectoryState>(context);
     final fileService = FileService();
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(appState.currentFileName),
+        title: Text(editorState.currentFileName),
         centerTitle: true,
         flexibleSpace: MenuBar(
           children: [
@@ -26,9 +28,9 @@ class HomeScreen extends StatelessWidget {
               menuChildren: [
                 MenuItemButton(
                   onPressed: () {
-                    appState.updateEditorContent('');
-                    appState.setCurrentFileName('Безымянный');
-                    appState.setCurrentFilePath(null);
+                    editorState.updateEditorContent('');
+                    editorState.setCurrentFileName('Безымянный');
+                    editorState.setCurrentFilePath(null);
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Создан новый файл')),
                     );
@@ -41,22 +43,22 @@ class HomeScreen extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder:
-                            (context) => DirectoryPicker(
+                            (context) => FileSystemPicker(
                               onPathSelected: (path) async {
                                 final content = await fileService.openFile(
                                   path,
                                 );
                                 if (content != null) {
-                                  appState.updateEditorContent(content);
-                                  appState.setCurrentFileName(
+                                  editorState.updateEditorContent(content);
+                                  editorState.setCurrentFileName(
                                     path.split(Platform.pathSeparator).last,
                                   );
-                                  appState.setCurrentFilePath(path);
+                                  editorState.setCurrentFilePath(path);
                                   if (context.mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text(
-                                          'Файл открыт: ${appState.currentFileName}',
+                                          'Файл открыт: ${editorState.currentFileName}',
                                         ),
                                       ),
                                     );
@@ -75,10 +77,11 @@ class HomeScreen extends StatelessWidget {
                               },
                               isFilePicker: true,
                               initialPath:
-                                  appState.workingDirectory ??
+                                  directoryState.workingDirectory ??
                                   (Platform.isLinux
                                       ? Platform.environment['HOME'] ?? '/home'
                                       : 'C:\\'),
+                              titlePrefix: 'Выберите файл',
                             ),
                       ),
                     );
@@ -87,24 +90,23 @@ class HomeScreen extends StatelessWidget {
                 ),
                 MenuItemButton(
                   onPressed: () async {
-                    if (appState.currentFilePath != null) {
-                      // Сохраняем существующий файл
+                    if (editorState.currentFilePath != null) {
                       final success = await fileService.saveFile(
-                        appState.currentFilePath!.substring(
+                        editorState.currentFilePath!.substring(
                           0,
-                          appState.currentFilePath!.lastIndexOf(
+                          editorState.currentFilePath!.lastIndexOf(
                             Platform.pathSeparator,
                           ),
                         ),
-                        appState.currentFileName,
-                        appState.editorContent,
+                        editorState.currentFileName,
+                        editorState.editorContent,
                       );
                       if (success) {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                'Файл сохранён: ${appState.currentFileName}',
+                                'Файл сохранён: ${editorState.currentFileName}',
                               ),
                             ),
                           );
@@ -119,7 +121,6 @@ class HomeScreen extends StatelessWidget {
                         }
                       }
                     } else {
-                      // Открываем экран для выбора директории и имени файла
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -129,11 +130,11 @@ class HomeScreen extends StatelessWidget {
                                   final success = await fileService.saveFile(
                                     path,
                                     fileName,
-                                    appState.editorContent,
+                                    editorState.editorContent,
                                   );
                                   if (success) {
-                                    appState.setCurrentFileName(fileName);
-                                    appState.setCurrentFilePath(
+                                    editorState.setCurrentFileName(fileName);
+                                    editorState.setCurrentFilePath(
                                       path + Platform.pathSeparator + fileName,
                                     );
                                     if (context.mounted) {
@@ -162,7 +163,7 @@ class HomeScreen extends StatelessWidget {
                                   }
                                 },
                                 initialPath:
-                                    appState.workingDirectory ??
+                                    directoryState.workingDirectory ??
                                     (Platform.isLinux
                                         ? Platform.environment['HOME'] ??
                                             '/home'
@@ -185,11 +186,11 @@ class HomeScreen extends StatelessWidget {
                                 final success = await fileService.saveFile(
                                   path,
                                   fileName,
-                                  appState.editorContent,
+                                  editorState.editorContent,
                                 );
                                 if (success) {
-                                  appState.setCurrentFileName(fileName);
-                                  appState.setCurrentFilePath(
+                                  editorState.setCurrentFileName(fileName);
+                                  editorState.setCurrentFilePath(
                                     path + Platform.pathSeparator + fileName,
                                   );
                                   if (context.mounted) {
@@ -214,7 +215,7 @@ class HomeScreen extends StatelessWidget {
                                 }
                               },
                               initialPath:
-                                  appState.workingDirectory ??
+                                  directoryState.workingDirectory ??
                                   (Platform.isLinux
                                       ? Platform.environment['HOME'] ?? '/home'
                                       : 'C:\\'),

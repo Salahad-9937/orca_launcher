@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'models/app_state.dart';
+import 'models/editor_state.dart';
+import 'models/directory_state.dart';
 import 'screens/home_screen.dart';
 
 void main() {
   runApp(
-    ChangeNotifierProvider(
-      create: (context) => AppState(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => EditorState()),
+        ChangeNotifierProvider(create: (context) => DirectoryState()),
+      ],
       child: const MyApp(),
     ),
   );

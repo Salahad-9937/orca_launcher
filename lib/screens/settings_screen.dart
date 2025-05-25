@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../models/app_state.dart';
-import '../widgets/directory_picker.dart';
+import '../models/directory_state.dart';
+import '../widgets/file_system_picker.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -18,9 +18,9 @@ class SettingsScreenState extends State<SettingsScreen> {
   @override
   void initState() {
     super.initState();
-    final appState = Provider.of<AppState>(context, listen: false);
-    _orcaController.text = appState.orcaDirectory ?? '';
-    _workingController.text = appState.workingDirectory ?? '';
+    final directoryState = Provider.of<DirectoryState>(context, listen: false);
+    _orcaController.text = directoryState.orcaDirectory ?? '';
+    _workingController.text = directoryState.workingDirectory ?? '';
   }
 
   @override
@@ -32,7 +32,7 @@ class SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final appState = Provider.of<AppState>(context);
+    final directoryState = Provider.of<DirectoryState>(context);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Настройки')),
@@ -52,15 +52,16 @@ class SettingsScreenState extends State<SettingsScreen> {
                       context,
                       MaterialPageRoute(
                         builder:
-                            (context) => DirectoryPicker(
+                            (context) => FileSystemPicker(
                               onPathSelected: (path) {
                                 _orcaController.text = path;
-                                appState.setOrcaDirectory(path);
+                                directoryState.setOrcaDirectory(path);
                               },
                               initialPath:
                                   Platform.isLinux
                                       ? Platform.environment['HOME'] ?? '/home'
                                       : 'C:\\',
+                              titlePrefix: 'Выберите директорию ORCA',
                             ),
                       ),
                     );
@@ -68,7 +69,7 @@ class SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
               onChanged: (value) {
-                appState.setOrcaDirectory(value.isEmpty ? null : value);
+                directoryState.setOrcaDirectory(value.isEmpty ? null : value);
               },
             ),
             const SizedBox(height: 16),
@@ -83,15 +84,16 @@ class SettingsScreenState extends State<SettingsScreen> {
                       context,
                       MaterialPageRoute(
                         builder:
-                            (context) => DirectoryPicker(
+                            (context) => FileSystemPicker(
                               onPathSelected: (path) {
                                 _workingController.text = path;
-                                appState.setWorkingDirectory(path);
+                                directoryState.setWorkingDirectory(path);
                               },
                               initialPath:
                                   Platform.isLinux
                                       ? Platform.environment['HOME'] ?? '/home'
                                       : 'C:\\',
+                              titlePrefix: 'Выберите рабочую директорию',
                             ),
                       ),
                     );
@@ -99,7 +101,9 @@ class SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
               onChanged: (value) {
-                appState.setWorkingDirectory(value.isEmpty ? null : value);
+                directoryState.setWorkingDirectory(
+                  value.isEmpty ? null : value,
+                );
               },
             ),
           ],
