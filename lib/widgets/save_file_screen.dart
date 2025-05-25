@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/editor_state.dart';
 import '../models/directory_state.dart';
+import '../utils/file_utils.dart';
+import '../utils/error_display.dart';
 import '../services/file_handler.dart';
 import '../widgets/file_system_picker.dart';
 
@@ -44,15 +46,10 @@ class SaveFileScreenState extends State<SaveFileScreen> {
 
   void _handleSave() async {
     final fileName = _fileNameController.text.trim();
-    if (fileName.isEmpty) {
+    final fileNameError = FileUtils.validateFileName(fileName);
+    if (fileNameError != null) {
       setState(() {
-        _fileErrorText = 'Имя файла не может быть пустым';
-      });
-      return;
-    }
-    if (!fileName.endsWith('.inp')) {
-      setState(() {
-        _fileErrorText = 'Файл должен иметь расширение .inp';
+        _fileErrorText = fileNameError;
       });
       return;
     }
@@ -71,17 +68,13 @@ class SaveFileScreenState extends State<SaveFileScreen> {
       Provider.of<EditorState>(context, listen: false).editorContent,
     );
 
-    result.fold(
-      (error) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(error)));
-      },
-      (_) {
-        widget.onSave(_selectedPath!, fileName);
-        Navigator.of(context).pop();
-      },
-    );
+    result.fold((error) => ErrorDisplay.showError(context, error), (filePath) {
+      widget.onSave(_selectedPath!, fileName);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Файл сохранён: $fileName')));
+      Navigator.of(context).pop();
+    });
   }
 
   @override

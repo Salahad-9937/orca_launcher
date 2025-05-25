@@ -72,4 +72,16 @@ class FileUtils {
       return [];
     }
   }
+
+  /// Проверяет имя файла на валидность.
+  /// Возвращает null, если имя валидно, или сообщение об ошибке.
+  static String? validateFileName(String fileName) {
+    if (fileName.isEmpty) {
+      return 'Имя файла не может быть пустым';
+    }
+    if (!fileName.endsWith('.inp')) {
+      return 'Файл должен иметь расширение .inp';
+    }
+    return null;
+  }
 }

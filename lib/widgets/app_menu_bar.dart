@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/editor_state.dart';
 import '../models/directory_state.dart';
+import '../utils/error_display.dart';
 import '../services/file_handler.dart';
 import '../widgets/save_file_screen.dart';
 import '../widgets/file_system_picker.dart';
@@ -44,9 +45,7 @@ class AppMenuBar extends StatelessWidget {
                           onPathSelected: (path) async {
                             final result = await fileHandler.openFile(path);
                             result.fold(
-                              (error) => ScaffoldMessenger.of(
-                                context,
-                              ).showSnackBar(SnackBar(content: Text(error))),
+                              (error) => ErrorDisplay.showError(context, error),
                               (content) {
                                 editorState.updateEditorContent(content);
                                 editorState.setCurrentFileName(
@@ -85,9 +84,7 @@ class AppMenuBar extends StatelessWidget {
                     editorState.editorContent,
                   );
                   result.fold(
-                    (error) => ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text(error))),
+                    (error) => ErrorDisplay.showError(context, error),
                     (_) => ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
