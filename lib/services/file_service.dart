@@ -39,7 +39,6 @@ class FileService {
       // Проверяем, является ли путь файлом
       if (!await file.exists()) {
         if (kDebugMode && await Directory(path).exists()) {
-          print('Path is a directory, not a file: $path');
         } else if (kDebugMode) {
           print('File does not exist: $path');
         }
