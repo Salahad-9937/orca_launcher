@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'models/editor_state.dart';
-import 'models/directory_state.dart';
-import 'services/file_service.dart';
-import 'services/file_handler.dart';
-import 'screens/home_screen.dart';
+import 'core/models/editor_state.dart';
+import 'core/models/directory_state.dart';
+import 'core/services/file_service.dart';
+import 'core/services/file_handler.dart';
+import 'features/home/home_screen.dart';
 
 void main() {
   runApp(

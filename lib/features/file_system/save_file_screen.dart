@@ -1,12 +1,12 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../models/editor_state.dart';
-import '../models/directory_state.dart';
-import '../utils/file_utils.dart';
-import '../utils/error_display.dart';
-import '../services/file_handler.dart';
-import 'file_system/file_system_picker.dart';
+import '../../core/models/editor_state.dart';
+import '../../core/models/directory_state.dart';
+import '../../core/utils/file_utils.dart';
+import '../../core/utils/error_display.dart';
+import '../../core/services/file_handler.dart';
+import 'file_system_picker.dart';
 
 class SaveFileScreen extends StatefulWidget {
   final Function(String, String) onSave;

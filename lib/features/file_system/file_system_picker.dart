@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:rxdart/rxdart.dart';
-import '../../utils/file_utils.dart';
+import '../../core/utils/file_utils.dart';
 import 'create_folder_dialog.dart';
 import 'file_system_picker_app_bar.dart';
 import 'file_system_entity_list.dart';

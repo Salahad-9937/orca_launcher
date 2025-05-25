@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import '../models/editor_state.dart';
-import 'line_number_column.dart';
+import '../../../core/models/editor_state.dart';
+import '../components/line_number_column.dart';
 
 class TextEditor extends StatefulWidget {
   const TextEditor({super.key});

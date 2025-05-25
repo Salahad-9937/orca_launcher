@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
-import '../../utils/file_utils.dart';
+import '../../core/utils/file_utils.dart';
 
 class FileSystemEntityList extends StatefulWidget {
   final String currentPath;

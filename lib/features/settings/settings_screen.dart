@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../models/directory_state.dart';
-import '../widgets/file_system/file_system_picker.dart';
+import '../../core/models/directory_state.dart';
+import '../file_system/file_system_picker.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});

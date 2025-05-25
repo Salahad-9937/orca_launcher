@@ -1,13 +1,13 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../models/editor_state.dart';
-import '../models/directory_state.dart';
-import '../utils/error_display.dart';
-import '../services/file_handler.dart';
-import '../widgets/save_file_screen.dart';
-import '../widgets/file_system/file_system_picker.dart';
-import '../screens/settings_screen.dart';
+import '../../../core/models/editor_state.dart';
+import '../../../core/models/directory_state.dart';
+import '../../../core/utils/error_display.dart';
+import '../../../core/services/file_handler.dart';
+import '../../file_system/save_file_screen.dart';
+import '../../file_system/file_system_picker.dart';
+import '../../settings/settings_screen.dart';
 
 class AppMenuBar extends StatelessWidget {
   final String title;
