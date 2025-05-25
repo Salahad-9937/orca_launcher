@@ -1,5 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'file_service.dart';
 
 class FileHandler {
@@ -25,6 +26,7 @@ class FileHandler {
     String content,
   ) async {
     try {
+      print('Saving to path: $path/$fileName');
       final success = await _fileService.saveFile(path, fileName, content);
       if (!success) {
         return Left('Ошибка при сохранении файла');

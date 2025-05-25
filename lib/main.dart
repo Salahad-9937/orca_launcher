@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'models/editor_state.dart';
 import 'models/directory_state.dart';
+import 'services/file_service.dart';
+import 'services/file_handler.dart';
 import 'screens/home_screen.dart';
 
 void main() {
@@ -10,6 +12,7 @@ void main() {
       providers: [
         ChangeNotifierProvider(create: (context) => EditorState()),
         ChangeNotifierProvider(create: (context) => DirectoryState()),
+        Provider(create: (context) => FileHandler(FileService())),
       ],
       child: const MyApp(),
     ),

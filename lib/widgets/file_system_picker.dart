@@ -1,13 +1,14 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
-import '../../utils/file_utils.dart';
+import '../utils/file_utils.dart';
 
 class FileSystemPicker extends StatefulWidget {
   final Function(String) onPathSelected;
   final bool isFilePicker;
   final String? initialPath;
   final String titlePrefix;
+  final bool showConfirmButton;
 
   const FileSystemPicker({
     super.key,
@@ -15,6 +16,7 @@ class FileSystemPicker extends StatefulWidget {
     this.isFilePicker = false,
     this.initialPath,
     this.titlePrefix = 'Выберите',
+    this.showConfirmButton = true,
   });
 
   @override
@@ -131,7 +133,7 @@ class FileSystemPickerState extends State<FileSystemPicker> {
           overflow: TextOverflow.ellipsis,
         ),
         actions: [
-          if (!widget.isFilePicker)
+          if (!widget.isFilePicker && widget.showConfirmButton)
             IconButton(
               icon: const Icon(Icons.check),
               onPressed: () {
@@ -222,6 +224,9 @@ class FileSystemPickerState extends State<FileSystemPicker> {
                       _searchController.clear();
                       _searchQuery = '';
                     });
+                    widget.onPathSelected(
+                      entity.path,
+                    ); // Обновляем путь при выборе директории
                   }
                 },
               );

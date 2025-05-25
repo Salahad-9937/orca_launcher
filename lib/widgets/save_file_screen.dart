@@ -1,4 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../models/editor_state.dart';
+import '../models/directory_state.dart';
+import '../services/file_handler.dart';
 import '../widgets/file_system_picker.dart';
 
 class SaveFileScreen extends StatefulWidget {
@@ -14,11 +19,21 @@ class SaveFileScreen extends StatefulWidget {
 class SaveFileScreenState extends State<SaveFileScreen> {
   final TextEditingController _fileNameController = TextEditingController();
   String? _fileErrorText;
+  String? _selectedPath;
 
   @override
   void initState() {
     super.initState();
     _fileNameController.text = 'new_file.inp';
+    _initSelectedPath();
+  }
+
+  void _initSelectedPath() {
+    final directoryState = Provider.of<DirectoryState>(context, listen: false);
+    _selectedPath =
+        widget.initialPath ??
+        directoryState.workingDirectory ??
+        (Platform.isLinux ? Platform.environment['HOME'] ?? '/home' : 'C:\\');
   }
 
   @override
@@ -27,9 +42,52 @@ class SaveFileScreenState extends State<SaveFileScreen> {
     super.dispose();
   }
 
+  void _handleSave() async {
+    final fileName = _fileNameController.text.trim();
+    if (fileName.isEmpty) {
+      setState(() {
+        _fileErrorText = 'Имя файла не может быть пустым';
+      });
+      return;
+    }
+    if (!fileName.endsWith('.inp')) {
+      setState(() {
+        _fileErrorText = 'Файл должен иметь расширение .inp';
+      });
+      return;
+    }
+
+    if (_selectedPath == null) {
+      setState(() {
+        _fileErrorText = 'Директория не выбрана';
+      });
+      return;
+    }
+
+    final fileHandler = Provider.of<FileHandler>(context, listen: false);
+    final result = await fileHandler.saveFile(
+      _selectedPath!,
+      fileName,
+      Provider.of<EditorState>(context, listen: false).editorContent,
+    );
+
+    result.fold(
+      (error) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error)));
+      },
+      (_) {
+        widget.onSave(_selectedPath!, fileName);
+        Navigator.of(context).pop();
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(title: const Text('Сохранить файл')),
       body: Column(
         children: [
           Padding(
@@ -52,22 +110,7 @@ class SaveFileScreenState extends State<SaveFileScreen> {
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton(
-                  onPressed: () {
-                    final fileName = _fileNameController.text.trim();
-                    if (fileName.isEmpty) {
-                      setState(() {
-                        _fileErrorText = 'Имя файла не может быть пустым';
-                      });
-                      return;
-                    }
-                    if (!fileName.endsWith('.inp')) {
-                      setState(() {
-                        _fileErrorText = 'Файл должен иметь расширение .inp';
-                      });
-                      return;
-                    }
-                    // Будет вызвано из FileSystemPicker
-                  },
+                  onPressed: _handleSave,
                   child: const Text(
                     'Сохранить',
                     style: TextStyle(color: Colors.black),
@@ -79,24 +122,13 @@ class SaveFileScreenState extends State<SaveFileScreen> {
           Expanded(
             child: FileSystemPicker(
               onPathSelected: (path) {
-                final fileName = _fileNameController.text.trim();
-                if (fileName.isEmpty) {
-                  setState(() {
-                    _fileErrorText = 'Имя файла не может быть пустым';
-                  });
-                  return;
-                }
-                if (!fileName.endsWith('.inp')) {
-                  setState(() {
-                    _fileErrorText = 'Файл должен иметь расширение .inp';
-                  });
-                  return;
-                }
-                widget.onSave(path, fileName);
-                Navigator.of(context).pop();
+                setState(() {
+                  _selectedPath = path;
+                });
               },
-              initialPath: widget.initialPath,
-              titlePrefix: 'Сохранить файл',
+              initialPath: _selectedPath,
+              titlePrefix: 'Выберите директорию для сохранения',
+              showConfirmButton: false,
             ),
           ),
         ],

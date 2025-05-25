@@ -179,25 +179,10 @@ class AppMenuBar extends StatelessWidget {
       MaterialPageRoute(
         builder:
             (context) => SaveFileScreen(
-              onSave: (path, fileName) async {
-                final result = await fileHandler.saveFile(
-                  path,
-                  fileName,
-                  editorState.editorContent,
-                );
-                result.fold(
-                  (error) => ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text(error))),
-                  (_) {
-                    editorState.setCurrentFileName(fileName);
-                    editorState.setCurrentFilePath(
-                      path + Platform.pathSeparator + fileName,
-                    );
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Файл сохранён: $fileName')),
-                    );
-                  },
+              onSave: (path, fileName) {
+                editorState.setCurrentFileName(fileName);
+                editorState.setCurrentFilePath(
+                  path + Platform.pathSeparator + fileName,
                 );
               },
               initialPath:

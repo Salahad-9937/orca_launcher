@@ -14,23 +14,29 @@ class TextEditorState extends State<TextEditor> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _textController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
+  late EditorState _editorState;
 
   @override
   void initState() {
     super.initState();
-    final editorState = Provider.of<EditorState>(context, listen: false);
-    _textController.text = editorState.editorContent;
+    _editorState = Provider.of<EditorState>(context, listen: false);
+    _textController.text = _editorState.editorContent;
     _textController.addListener(() {
-      editorState.updateEditorContent(_textController.text);
+      _editorState.updateEditorContent(_textController.text);
     });
 
-    editorState.addListener(_updateTextController);
+    _editorState.addListener(_updateTextController);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _editorState = Provider.of<EditorState>(context, listen: false);
   }
 
   @override
   void dispose() {
-    final editorState = Provider.of<EditorState>(context, listen: false);
-    editorState.removeListener(_updateTextController);
+    _editorState.removeListener(_updateTextController);
     _textController.dispose();
     _scrollController.dispose();
     _focusNode.dispose();
@@ -38,9 +44,8 @@ class TextEditorState extends State<TextEditor> {
   }
 
   void _updateTextController() {
-    final editorState = Provider.of<EditorState>(context, listen: false);
-    if (_textController.text != editorState.editorContent) {
-      _textController.text = editorState.editorContent;
+    if (_textController.text != _editorState.editorContent) {
+      _textController.text = _editorState.editorContent;
       _textController.selection = TextSelection.collapsed(
         offset: _textController.text.length,
       );

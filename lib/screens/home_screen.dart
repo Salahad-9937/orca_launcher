@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/editor_state.dart';
-import '../services/file_handler.dart';
-import '../services/file_service.dart';
 import '../widgets/app_menu_bar.dart';
 import '../widgets/editor_header.dart';
 import '../widgets/text_editor.dart';
@@ -18,10 +16,7 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text(editorState.currentFileName),
         centerTitle: true,
-        flexibleSpace: Provider(
-          create: (_) => FileHandler(FileService()),
-          child: AppMenuBar(title: editorState.currentFileName),
-        ),
+        flexibleSpace: AppMenuBar(title: editorState.currentFileName),
       ),
       body: const Padding(
         padding: EdgeInsets.all(16.0),
