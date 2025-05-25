@@ -89,34 +89,62 @@ class CustomTextFieldState extends State<CustomTextField> {
       charCount += lines[i].length + 1; // +1 для символа новой строки
     }
 
+    // Проверяем, зажат ли Shift (левый или правый)
+    final bool isShiftPressed =
+        HardwareKeyboard.instance.logicalKeysPressed.contains(
+          LogicalKeyboardKey.shiftLeft,
+        ) ||
+        HardwareKeyboard.instance.logicalKeysPressed.contains(
+          LogicalKeyboardKey.shiftRight,
+        );
+
+    // Отладочный вывод для отслеживания нажатий
+    // print(
+    //   'Key: ${event.logicalKey}, Shift: $isShiftPressed, Offset: $offset, Line: $currentLineIndex, CharCount: $charCount',
+    // );
+
+    // Проверяем, зажат ли Shift для выделения текста
+    final int anchor = selection.baseOffset; // Точка начала выделения
+
     // Обработка Home и Numpad 7 (Home)
     if (event.logicalKey == LogicalKeyboardKey.home ||
         event.logicalKey == LogicalKeyboardKey.numpad7) {
-      _effectiveController.selection = TextSelection.collapsed(
-        offset: charCount,
-      );
+      final newOffset = charCount; // Начало текущей строки
+      _effectiveController.selection =
+          isShiftPressed
+              ? TextSelection(baseOffset: anchor, extentOffset: newOffset)
+              : TextSelection.collapsed(offset: newOffset);
       return KeyEventResult.handled;
     }
     // Обработка End и Numpad 1 (End)
     else if (event.logicalKey == LogicalKeyboardKey.end ||
         event.logicalKey == LogicalKeyboardKey.numpad1) {
-      _effectiveController.selection = TextSelection.collapsed(
-        offset: charCount + lines[currentLineIndex].length,
-      );
+      final newOffset =
+          charCount + lines[currentLineIndex].length; // Конец текущей строки
+      _effectiveController.selection =
+          isShiftPressed
+              ? TextSelection(baseOffset: anchor, extentOffset: newOffset)
+              : TextSelection.collapsed(offset: newOffset);
       return KeyEventResult.handled;
     }
     // Обработка PageUp и Numpad 9 (PageUp)
     else if (event.logicalKey == LogicalKeyboardKey.pageUp ||
         event.logicalKey == LogicalKeyboardKey.numpad9) {
-      _effectiveController.selection = const TextSelection.collapsed(offset: 0);
+      const newOffset = 0; // Начало текста
+      _effectiveController.selection =
+          isShiftPressed
+              ? TextSelection(baseOffset: anchor, extentOffset: newOffset)
+              : TextSelection.collapsed(offset: newOffset);
       return KeyEventResult.handled;
     }
     // Обработка PageDown и Numpad 3 (PageDown)
     else if (event.logicalKey == LogicalKeyboardKey.pageDown ||
         event.logicalKey == LogicalKeyboardKey.numpad3) {
-      _effectiveController.selection = TextSelection.collapsed(
-        offset: text.length,
-      );
+      final newOffset = text.length; // Конец текста
+      _effectiveController.selection =
+          isShiftPressed
+              ? TextSelection(baseOffset: anchor, extentOffset: newOffset)
+              : TextSelection.collapsed(offset: newOffset);
       return KeyEventResult.handled;
     }
 
