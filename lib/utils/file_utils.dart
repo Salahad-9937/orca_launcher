@@ -19,7 +19,7 @@ class FileUtils {
     }
   }
 
-  /// Возвращает содержимое директории с учётом фильтров и пагинации.
+  /// Возвращает содержимое директории с учётом фильтров, сортировки и пагинации.
   /// [path] - путь к директории.
   /// [isFilePicker] - если true, показывать файлы .inp и папки, иначе только папки.
   /// [showHidden] - показывать скрытые файлы/папки.
@@ -71,13 +71,59 @@ class FileUtils {
             }).toList();
       }
 
+      // Разделяем на директории и файлы
+      final directories = filteredEntities.whereType<Directory>().toList();
+      final files = filteredEntities.whereType<File>().toList();
+
+      // Определяем функцию сортировки по имени
+      int compareNames(String a, String b) {
+        // Проверяем категории символов
+        bool isSymbolOrDigit(String s) => RegExp(r'^[0-9\W]').hasMatch(s);
+        bool isLatin(String s) => RegExp(r'^[a-zA-Z]').hasMatch(s);
+        bool isCyrillic(String s) => RegExp(r'^[\u0400-\u04FF]').hasMatch(s);
+
+        // Проверяем категории для a и б
+        final isASymbol = isSymbolOrDigit(a);
+        final isBSymbol = isSymbolOrDigit(b);
+        final isALatin = isLatin(a);
+        final isBLatin = isLatin(b);
+        final isACyrillic = isCyrillic(a);
+        final isBCyrillic = isCyrillic(b);
+
+        // Сравниваем по категориям: символы/цифры → латиница → кириллица
+        if (isASymbol && !isBSymbol) return -1;
+        if (!isASymbol && isBSymbol) return 1;
+        if (isALatin && !isBLatin) return -1; // Латиница перед кириллицей
+        if (!isALatin && isBLatin) return 1;
+        if (isACyrillic && !isBCyrillic) return 1; // Кириллица после латиницы
+        if (!isACyrillic && isBCyrillic) return -1;
+
+        // Внутри категории: символы/цифры и латиница — игнорировать регистр
+        if (isASymbol || isALatin) {
+          return a.toLowerCase().compareTo(b.toLowerCase());
+        }
+        // Для кириллицы — учитывать естественный порядок
+        return a.compareTo(b);
+      }
+
+      // Сортируем директории и файлы по имени
+      directories.sort(
+        (a, b) => compareNames(p.basename(a.path), p.basename(b.path)),
+      );
+      files.sort(
+        (a, b) => compareNames(p.basename(a.path), p.basename(b.path)),
+      );
+
+      // Объединяем: сначала директории, затем файлы
+      final sortedEntities = [...directories, ...files];
+
       // Пагинация
       final startIndex = page * pageSize;
-      final endIndex = min(startIndex + pageSize, filteredEntities.length);
-      if (startIndex >= filteredEntities.length) {
+      final endIndex = min(startIndex + pageSize, sortedEntities.length);
+      if (startIndex >= sortedEntities.length) {
         return [];
       }
-      return filteredEntities.sublist(startIndex, endIndex);
+      return sortedEntities.sublist(startIndex, endIndex);
     } catch (e) {
       if (kDebugMode) {
         print('Error listing directory contents: $e');
