@@ -47,6 +47,7 @@ class AppMenuBar extends StatelessWidget {
                         (context) => FileSystemPicker(
                           onPathSelected: (path) async {
                             final result = await fileHandler.openFile(path);
+                            if (!context.mounted) return;
                             result.fold(
                               (error) => ErrorDisplay.showError(context, error),
                               (content) {
@@ -148,7 +149,7 @@ class AppMenuBar extends StatelessWidget {
                     ErrorDisplay.showError(
                       context,
                       AppError(
-                        'Путь к ORCA не указан\nУкажите его в настройках',
+                        'Путь к ORCA не указан',
                         type: ErrorType.generic,
                       ),
                     );
@@ -179,6 +180,28 @@ class AppMenuBar extends StatelessWidget {
                   }
                   return;
                 }
+                // Показываем диалог подтверждения
+                final bool? confirm = await showDialog<bool>(
+                  context: context,
+                  builder:
+                      (context) => AlertDialog(
+                        title: const Text('Подтверждение запуска'),
+                        content: Text(
+                          'Запустить ORCA для файла ${editorState.currentFileName}?',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(false),
+                            child: const Text('Отмена'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(true),
+                            child: const Text('Запустить'),
+                          ),
+                        ],
+                      ),
+                );
+                if (confirm != true || !context.mounted) return;
                 // Сохраняем текущий файл перед запуском
                 final saveResult = await fileHandler.saveExistingFile(
                   editorState.currentFilePath!,
@@ -219,7 +242,7 @@ class AppMenuBar extends StatelessWidget {
                     ErrorDisplay.showError(
                       context,
                       AppError(
-                        'Путь к ORCA не указан\nУкажите его в настройках',
+                        'Путь к ORCA не указан',
                         type: ErrorType.generic,
                       ),
                     );
@@ -244,6 +267,33 @@ class AppMenuBar extends StatelessWidget {
                               }
                               return;
                             }
+                            // Показываем диалог подтверждения
+                            final bool? confirm = await showDialog<bool>(
+                              context: context,
+                              builder:
+                                  (context) => AlertDialog(
+                                    title: const Text('Подтверждение запуска'),
+                                    content: Text(
+                                      'Запустить ORCA для файла ${path.split(Platform.pathSeparator).last}?',
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed:
+                                            () => Navigator.of(
+                                              context,
+                                            ).pop(false),
+                                        child: const Text('Отмена'),
+                                      ),
+                                      TextButton(
+                                        onPressed:
+                                            () =>
+                                                Navigator.of(context).pop(true),
+                                        child: const Text('Запустить'),
+                                      ),
+                                    ],
+                                  ),
+                            );
+                            if (confirm != true || !context.mounted) return;
                             final outputFilePath = path.replaceAll(
                               '.inp',
                               '.out',
