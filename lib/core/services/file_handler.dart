@@ -8,6 +8,33 @@ class FileHandler {
 
   FileHandler(this._fileService);
 
+  /// Запускает ORCA с указанным входным файлом и сохраняет вывод в выходной файл.
+  /// [orcaPath] - полный путь к исполняемому файлу ORCA (например, /path/to/orca_6_0_1/orca).
+  /// [inputFilePath] - путь к входному файлу (.inp).
+  /// [outputFilePath] - путь к выходному файлу (.out).
+  /// Возвращает [Right] с выводом команды или [Left] с ошибкой.
+  Future<Either<AppError, String>> runOrca(
+    String orcaPath,
+    String inputFilePath,
+    String outputFilePath,
+  ) async {
+    try {
+      final result = await _fileService.runOrca(
+        orcaPath,
+        inputFilePath,
+        outputFilePath,
+      );
+      return result.fold(
+        (error) => Left(AppError(error, type: ErrorType.generic)),
+        (output) => Right(output),
+      );
+    } catch (e) {
+      return Left(
+        AppError('Ошибка при запуске ORCA: $e', type: ErrorType.generic),
+      );
+    }
+  }
+
   /// Открывает файл по указанному пути.
   /// Возвращает [Right] с содержимым файла или [Left] с ошибкой.
   Future<Either<AppError, String>> openFile(String path) async {

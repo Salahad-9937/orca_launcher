@@ -12,6 +12,7 @@ class FileSystemPicker extends StatefulWidget {
   final String? initialPath;
   final String titlePrefix;
   final bool showConfirmButton;
+  final List<String>? allowedExtensions;
 
   const FileSystemPicker({
     super.key,
@@ -20,6 +21,7 @@ class FileSystemPicker extends StatefulWidget {
     this.initialPath,
     this.titlePrefix = 'Выберите',
     this.showConfirmButton = true,
+    this.allowedExtensions,
   });
 
   @override
@@ -108,6 +110,7 @@ class FileSystemPickerState extends State<FileSystemPicker> {
         isFilePicker: widget.isFilePicker,
         showHidden: _showHidden,
         searchQuery: _searchQuery,
+        allowedExtensions: widget.allowedExtensions,
         onPathSelected: (path) {
           if (widget.isFilePicker && File(path).existsSync()) {
             widget.onPathSelected(path);

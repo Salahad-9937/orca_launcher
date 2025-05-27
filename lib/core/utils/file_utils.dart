@@ -21,11 +21,12 @@ class FileUtils {
 
   /// Возвращает содержимое директории с учётом фильтров, сортировки и пагинации.
   /// [path] - путь к директории.
-  /// [isFilePicker] - если true, показывать файлы .inp и папки, иначе только папки.
+  /// [isFilePicker] - если true, показывать файлы и папки, иначе только папки.
   /// [showHidden] - показывать скрытые файлы/папки.
   /// [searchQuery] - поисковый запрос для фильтрации.
   /// [page] - номер страницы для пагинации.
   /// [pageSize] - количество элементов на странице.
+  /// [allowedExtensions] - список разрешённых расширений файлов (например, ['.inp']).
   static Future<List<FileSystemEntity>> getDirectoryContents(
     String path, {
     bool isFilePicker = false,
@@ -33,6 +34,7 @@ class FileUtils {
     String searchQuery = '',
     int page = 0,
     int pageSize = 50,
+    List<String>? allowedExtensions,
   }) async {
     try {
       final dir = Directory(path);
@@ -49,7 +51,17 @@ class FileUtils {
         filteredEntities =
             entities.where((entity) {
               if (entity is Directory) return true;
-              if (entity is File && entity.path.endsWith('.inp')) return true;
+              if (entity is File) {
+                if (allowedExtensions != null && allowedExtensions.isNotEmpty) {
+                  return allowedExtensions.any(
+                    (ext) =>
+                        entity.path.toLowerCase().endsWith(ext.toLowerCase()),
+                  );
+                }
+                return entity.path.endsWith(
+                  '.inp',
+                ); // Сохранена старая логика как запасная
+              }
               return false;
             }).toList();
       } else {

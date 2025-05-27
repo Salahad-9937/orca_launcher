@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'dart:convert';
+import 'package:dartz/dartz.dart';
 import 'package:flutter/foundation.dart';
 
 class FileService {
@@ -7,13 +9,49 @@ class FileService {
     return null;
   }
 
+  /// Запускает ORCA с указанным входным файлом и сохраняет вывод в выходной файл.
+  /// [orcaPath] - полный путь к исполняемому файлу ORCA (например, /path/to/orca_6_0_1/orca).
+  /// [inputFilePath] - путь к входному файлу (.inp).
+  /// [outputFilePath] - путь к выходному файлу (.out).
+  /// Возвращает [Right] с выводом команды или [Left] с ошибкой.
+  Future<Either<String, String>> runOrca(
+    String orcaPath,
+    String inputFilePath,
+    String outputFilePath,
+  ) async {
+    try {
+      final result = await Process.run(
+        orcaPath,
+        [inputFilePath],
+        stdoutEncoding: utf8,
+        stderrEncoding: utf8,
+      );
+      await File(outputFilePath).writeAsString(result.stdout);
+      if (result.exitCode != 0) {
+        return Left('Ошибка при запуске ORCA: ${result.stderr}');
+      }
+      if (kDebugMode) {
+        print('ORCA executed successfully: $inputFilePath -> $outputFilePath');
+      }
+      return Right(result.stdout);
+    } catch (e) {
+      if (e is ProcessException &&
+          e.message.contains('Нет такого файла или каталога')) {
+        return Left('Путь к исполняемому файлу orca указан некорректно!');
+      }
+      if (kDebugMode) {
+        print('Error running ORCA: $e');
+      }
+      return Left('Ошибка при запуске ORCA: $e');
+    }
+  }
+
   /// Сохраняет файл с указанным именем и содержимым в заданной директории.
   /// Возвращает [true] при успехе, [false] при ошибке.
   Future<bool> saveFile(String path, String fileName, String content) async {
     try {
       final file = File('$path/$fileName');
       if (await file.exists()) {
-        // Можно добавить логику для подтверждения перезаписи
         if (kDebugMode) {
           print('Overwriting existing file: ${file.path}');
         }
@@ -36,7 +74,6 @@ class FileService {
   Future<String?> openFile(String path) async {
     try {
       final file = File(path);
-      // Проверяем, является ли путь файлом
       if (!await file.exists()) {
         if (kDebugMode && await Directory(path).exists()) {
         } else if (kDebugMode) {

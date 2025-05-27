@@ -4,7 +4,8 @@ class DirectoryState extends ChangeNotifier {
   String? _orcaDirectory;
   String? _workingDirectory;
 
-  String? get orcaDirectory => _orcaDirectory;
+  String? get orcaDirectory =>
+      _orcaDirectory != null ? '$_orcaDirectory/orca' : null;
   String? get workingDirectory => _workingDirectory;
 
   void setOrcaDirectory(String? path) {

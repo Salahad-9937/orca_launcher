@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../core/models/app_error.dart';
 import '../../../core/models/editor_state.dart';
 import '../../../core/models/directory_state.dart';
 import '../../../core/utils/error_display.dart';
@@ -29,9 +30,11 @@ class AppMenuBar extends StatelessWidget {
                 editorState.updateEditorContent('');
                 editorState.setCurrentFileName('Безымянный');
                 editorState.setCurrentFilePath(null);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Создан новый файл')),
-                );
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Создан новый файл')),
+                  );
+                }
               },
               child: const Text('Создать'),
             ),
@@ -83,6 +86,7 @@ class AppMenuBar extends StatelessWidget {
                     editorState.currentFileName,
                     editorState.editorContent,
                   );
+                  if (!context.mounted) return;
                   result.fold(
                     (error) => ErrorDisplay.showError(context, error),
                     (_) => ScaffoldMessenger.of(context).showSnackBar(
@@ -134,6 +138,149 @@ class AppMenuBar extends StatelessWidget {
             ),
           ],
           child: const Text('Файл'),
+        ),
+        SubmenuButton(
+          menuChildren: [
+            MenuItemButton(
+              onPressed: () async {
+                if (directoryState.orcaDirectory == null) {
+                  if (context.mounted) {
+                    ErrorDisplay.showError(
+                      context,
+                      AppError(
+                        'Путь к ORCA не указан\nУкажите его в настройках',
+                        type: ErrorType.generic,
+                      ),
+                    );
+                  }
+                  return;
+                }
+                if (editorState.currentFilePath == null) {
+                  if (context.mounted) {
+                    ErrorDisplay.showError(
+                      context,
+                      AppError(
+                        'Нет открытого файла для запуска',
+                        type: ErrorType.generic,
+                      ),
+                    );
+                  }
+                  return;
+                }
+                if (!editorState.currentFileName.endsWith('.inp')) {
+                  if (context.mounted) {
+                    ErrorDisplay.showError(
+                      context,
+                      AppError(
+                        'Файл должен иметь расширение .inp',
+                        type: ErrorType.generic,
+                      ),
+                    );
+                  }
+                  return;
+                }
+                // Сохраняем текущий файл перед запуском
+                final saveResult = await fileHandler.saveExistingFile(
+                  editorState.currentFilePath!,
+                  editorState.currentFileName,
+                  editorState.editorContent,
+                );
+                if (!context.mounted) return;
+                saveResult.fold(
+                  (error) => ErrorDisplay.showError(context, error),
+                  (_) async {
+                    final outputFilePath = editorState.currentFilePath!
+                        .replaceAll('.inp', '.out');
+                    final result = await fileHandler.runOrca(
+                      directoryState.orcaDirectory!,
+                      editorState.currentFilePath!,
+                      outputFilePath,
+                    );
+                    if (!context.mounted) return;
+                    result.fold(
+                      (error) => ErrorDisplay.showError(context, error),
+                      (_) => ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'ORCA успешно запущена: результат в $outputFilePath',
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+              child: const Text('Запуск'),
+            ),
+            MenuItemButton(
+              onPressed: () {
+                if (directoryState.orcaDirectory == null) {
+                  if (context.mounted) {
+                    ErrorDisplay.showError(
+                      context,
+                      AppError(
+                        'Путь к ORCA не указан\nУкажите его в настройках',
+                        type: ErrorType.generic,
+                      ),
+                    );
+                  }
+                  return;
+                }
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder:
+                        (context) => FileSystemPicker(
+                          onPathSelected: (path) async {
+                            if (!path.endsWith('.inp')) {
+                              if (context.mounted) {
+                                ErrorDisplay.showError(
+                                  context,
+                                  AppError(
+                                    'Выберите файл с расширением .inp',
+                                    type: ErrorType.generic,
+                                  ),
+                                );
+                              }
+                              return;
+                            }
+                            final outputFilePath = path.replaceAll(
+                              '.inp',
+                              '.out',
+                            );
+                            final result = await fileHandler.runOrca(
+                              directoryState.orcaDirectory!,
+                              path,
+                              outputFilePath,
+                            );
+                            if (!context.mounted) return;
+                            result.fold(
+                              (error) => ErrorDisplay.showError(context, error),
+                              (_) => ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'ORCA успешно запущена: результат в $outputFilePath',
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                          isFilePicker: true,
+                          initialPath:
+                              directoryState.workingDirectory ??
+                              (Platform.isLinux
+                                  ? Platform.environment['HOME'] ?? '/home'
+                                  : 'C:\\'),
+                          titlePrefix: 'Выберите .inp файл',
+                          allowedExtensions: ['.inp'],
+                        ),
+                  ),
+                );
+              },
+              child: const Text('Запуск из файла'),
+            ),
+          ],
+          child: const Text('Запуск'),
         ),
         SubmenuButton(
           menuChildren: [

@@ -10,6 +10,7 @@ class FileSystemEntityList extends StatefulWidget {
   final String searchQuery;
   final Function(String) onPathSelected;
   final VoidCallback onNavigateBack;
+  final List<String>? allowedExtensions; // Новый параметр для фильтрации
 
   const FileSystemEntityList({
     super.key,
@@ -19,6 +20,7 @@ class FileSystemEntityList extends StatefulWidget {
     required this.searchQuery,
     required this.onPathSelected,
     required this.onNavigateBack,
+    this.allowedExtensions,
   });
 
   @override
@@ -51,7 +53,8 @@ class FileSystemEntityListState extends State<FileSystemEntityList> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.currentPath != widget.currentPath ||
         oldWidget.showHidden != widget.showHidden ||
-        oldWidget.searchQuery != widget.searchQuery) {
+        oldWidget.searchQuery != widget.searchQuery ||
+        oldWidget.allowedExtensions != widget.allowedExtensions) {
       _page = 0;
       _entities.clear();
       _hasMore = true;
@@ -71,6 +74,7 @@ class FileSystemEntityListState extends State<FileSystemEntityList> {
       searchQuery: widget.searchQuery,
       page: _page,
       pageSize: _pageSize,
+      allowedExtensions: widget.allowedExtensions, // Передаём фильтр
     );
     setState(() {
       _entities.addAll(newEntities);
