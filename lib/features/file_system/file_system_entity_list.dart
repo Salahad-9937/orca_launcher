@@ -11,6 +11,7 @@ import '../../core/utils/file_utils.dart';
 /// [onPathSelected] Коллбэк, вызываемый при выборе пути.
 /// [onNavigateBack] Коллбэк для перехода в родительскую директорию.
 /// [allowedExtensions] Список разрешённых расширений файлов.
+/// [refreshKey] Ключ для принудительного обновления списка.
 class FileSystemEntityList extends StatefulWidget {
   final String currentPath;
   final bool isFilePicker;
@@ -19,6 +20,7 @@ class FileSystemEntityList extends StatefulWidget {
   final Function(String) onPathSelected;
   final VoidCallback onNavigateBack;
   final List<String>? allowedExtensions;
+  final Object? refreshKey;
 
   const FileSystemEntityList({
     super.key,
@@ -29,6 +31,7 @@ class FileSystemEntityList extends StatefulWidget {
     required this.onPathSelected,
     required this.onNavigateBack,
     this.allowedExtensions,
+    this.refreshKey,
   });
 
   @override
@@ -69,7 +72,8 @@ class FileSystemEntityListState extends State<FileSystemEntityList> {
     if (oldWidget.currentPath != widget.currentPath ||
         oldWidget.showHidden != widget.showHidden ||
         oldWidget.searchQuery != widget.searchQuery ||
-        oldWidget.allowedExtensions != widget.allowedExtensions) {
+        oldWidget.allowedExtensions != widget.allowedExtensions ||
+        oldWidget.refreshKey != widget.refreshKey) {
       _page = 0;
       _entities.clear();
       _hasMore = true;

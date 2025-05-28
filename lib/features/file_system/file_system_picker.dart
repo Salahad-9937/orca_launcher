@@ -40,11 +40,13 @@ class FileSystemPicker extends StatefulWidget {
 /// [_searchSubject] Поток для обработки поисковых запросов.
 /// [_searchQuery] Текущий поисковый запрос.
 /// [_showHidden] Флаг отображения скрытых файлов.
+/// [_refreshKey] Ключ для принудительного обновления списка.
 class FileSystemPickerState extends State<FileSystemPicker> {
   String _currentPath = '';
   final BehaviorSubject<String> _searchSubject = BehaviorSubject<String>();
   String _searchQuery = '';
   bool _showHidden = false;
+  int _refreshKey = 0;
 
   @override
   void initState() {
@@ -84,7 +86,9 @@ class FileSystemPickerState extends State<FileSystemPicker> {
           (context) => CreateFolderDialog(
             currentPath: _currentPath,
             onFolderCreated: () {
-              setState(() {});
+              setState(() {
+                _refreshKey++;
+              });
             },
           ),
     );
@@ -118,6 +122,7 @@ class FileSystemPickerState extends State<FileSystemPicker> {
         },
       ),
       body: FileSystemEntityList(
+        key: ValueKey(_refreshKey),
         currentPath: _currentPath,
         isFilePicker: widget.isFilePicker,
         showHidden: _showHidden,
