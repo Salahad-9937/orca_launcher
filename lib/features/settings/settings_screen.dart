@@ -6,6 +6,10 @@ import '../../core/models/directory_state.dart';
 import '../../core/widgets/custom_text_field.dart';
 import '../file_system/file_system_picker.dart';
 
+/// Экран настроек для управления директориями приложения.
+/// [_orcaController] Контроллер для поля ввода директории ORCA.
+/// [_workingController] Контроллер для поля ввода рабочей директории.
+/// [_isOrcaValid] Флаг валидности пути к ORCA.
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
@@ -13,6 +17,10 @@ class SettingsScreen extends StatefulWidget {
   SettingsScreenState createState() => SettingsScreenState();
 }
 
+/// Состояние экрана настроек, управляющее полями ввода и валидацией.
+/// [_orcaController] Контроллер для поля ввода директории ORCA.
+/// [_workingController] Контроллер для поля ввода рабочей директории.
+/// [_isOrcaValid] Флаг валидности пути к ORCA.
 class SettingsScreenState extends State<SettingsScreen> {
   final TextEditingController _orcaController = TextEditingController();
   final TextEditingController _workingController = TextEditingController();
@@ -22,16 +30,16 @@ class SettingsScreenState extends State<SettingsScreen> {
   void initState() {
     super.initState();
     final directoryState = Provider.of<DirectoryState>(context, listen: false);
-    // Отображаем только директорию, убирая /orca из пути
     _orcaController.text =
         directoryState.orcaDirectory != null
             ? p.dirname(directoryState.orcaDirectory!)
             : '';
     _workingController.text = directoryState.workingDirectory ?? '';
-    _validateOrcaPath(_orcaController.text); // Проверка при инициализации
+    _validateOrcaPath(_orcaController.text);
     _orcaController.addListener(_onOrcaPathChanged);
   }
 
+  /// Обрабатывает изменение пути к директории ORCA и обновляет состояние.
   void _onOrcaPathChanged() {
     final path = _orcaController.text;
     _validateOrcaPath(path);
@@ -39,14 +47,15 @@ class SettingsScreenState extends State<SettingsScreen> {
     directoryState.setOrcaDirectory(path.isEmpty ? null : path);
   }
 
+  /// Проверяет валидность пути к директории ORCA.
+  /// [path] Путь к директории ORCA.
   void _validateOrcaPath(String path) {
     if (path.isEmpty) {
       setState(() {
-        _isOrcaValid = true; // Пустой путь не показывает ошибку
+        _isOrcaValid = true;
       });
       return;
     }
-    // Проверяем существование файла orca в указанной директории
     final orcaFile = File('$path${Platform.pathSeparator}orca');
     setState(() {
       _isOrcaValid = orcaFile.existsSync();

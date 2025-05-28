@@ -3,6 +3,8 @@ import 'file_menu.dart';
 import 'run_menu.dart';
 import 'help_menu.dart';
 
+/// Виджет панели меню приложения.
+/// [title] Заголовок меню.
 class AppMenuBar extends StatelessWidget {
   final String title;
 

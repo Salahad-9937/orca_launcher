@@ -3,17 +3,18 @@ import 'dart:convert';
 import 'package:dartz/dartz.dart';
 import 'package:flutter/foundation.dart';
 
+/// Класс для выполнения низкоуровневых операций с файлами и запуска ORCA.
 class FileService {
+  /// Выбирает директорию для файловых операций.
   Future<String?> pickDirectory() async {
     // Метод не требуется, так как используется DirectoryPicker
     return null;
   }
 
   /// Запускает ORCA с указанным входным файлом и сохраняет вывод в выходной файл.
-  /// [orcaPath] - полный путь к исполняемому файлу ORCA (например, /path/to/orca_6_0_1/orca).
-  /// [inputFilePath] - путь к входному файлу (.inp).
-  /// [outputFilePath] - путь к выходному файлу (.out).
-  /// Возвращает [Right] с выводом команды или [Left] с ошибкой.
+  /// [orcaPath] Полный путь к исполняемому файлу ORCA.
+  /// [inputFilePath] Путь к входному файлу (.inp).
+  /// [outputFilePath] Путь к выходному файлу (.out).
   Future<Either<String, String>> runOrca(
     String orcaPath,
     String inputFilePath,
@@ -47,7 +48,9 @@ class FileService {
   }
 
   /// Сохраняет файл с указанным именем и содержимым в заданной директории.
-  /// Возвращает [true] при успехе, [false] при ошибке.
+  /// [path] Путь к директории.
+  /// [fileName] Имя файла.
+  /// [content] Содержимое файла.
   Future<bool> saveFile(String path, String fileName, String content) async {
     try {
       final file = File('$path/$fileName');
@@ -70,7 +73,7 @@ class FileService {
   }
 
   /// Открывает файл по указанному пути и возвращает его содержимое.
-  /// Возвращает [null], если путь не указывает на существующий файл.
+  /// [path] Путь к файлу.
   Future<String?> openFile(String path) async {
     try {
       final file = File(path);

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 /// Виджет для отображения колонки с номерами строк в текстовом редакторе.
-/// [lineCount] - количество строк для отображения.
-/// [lineHeight] - высота одной строки, для синхронизации с текстовым полем.
-/// [textStyle] - стиль текста для номеров строк.
+/// [lineCount] Количество строк для отображения.
+/// [lineHeight] Высота одной строки.
+/// [textStyle] Стиль текста для номеров строк.
 class LineNumberColumn extends StatelessWidget {
   final int lineCount;
   final double lineHeight;

@@ -4,8 +4,10 @@ import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 
+/// Класс для утилитных операций с файлами и директориями.
 class FileUtils {
   /// Возвращает начальный путь для выбора директории или файла.
+  /// [providedPath] Предоставленный путь, если есть.
   static Future<String> getInitialPath(String? providedPath) async {
     if (providedPath != null) {
       return providedPath;
@@ -20,13 +22,13 @@ class FileUtils {
   }
 
   /// Возвращает содержимое директории с учётом фильтров, сортировки и пагинации.
-  /// [path] - путь к директории.
-  /// [isFilePicker] - если true, показывать файлы и папки, иначе только папки.
-  /// [showHidden] - показывать скрытые файлы/папки.
-  /// [searchQuery] - поисковый запрос для фильтрации.
-  /// [page] - номер страницы для пагинации.
-  /// [pageSize] - количество элементов на странице.
-  /// [allowedExtensions] - список разрешённых расширений файлов (например, ['.inp']).
+  /// [path] Путь к директории.
+  /// [isFilePicker] Если true, показывать файлы и папки, иначе только папки.
+  /// [showHidden] Показывать скрытые файлы/папки.
+  /// [searchQuery] Поисковый запрос для фильтрации.
+  /// [page] Номер страницы для пагинации.
+  /// [pageSize] Количество элементов на странице.
+  /// [allowedExtensions] Список разрешённых расширений файлов.
   static Future<List<FileSystemEntity>> getDirectoryContents(
     String path, {
     bool isFilePicker = false,
@@ -58,9 +60,7 @@ class FileUtils {
                         entity.path.toLowerCase().endsWith(ext.toLowerCase()),
                   );
                 }
-                return entity.path.endsWith(
-                  '.inp',
-                ); // Сохранена старая логика как запасная
+                return entity.path.endsWith('.inp');
               }
               return false;
             }).toList();
@@ -83,18 +83,14 @@ class FileUtils {
             }).toList();
       }
 
-      // Разделяем на директории и файлы
       final directories = filteredEntities.whereType<Directory>().toList();
       final files = filteredEntities.whereType<File>().toList();
 
-      // Определяем функцию сортировки по имени
       int compareNames(String a, String b) {
-        // Проверяем категории символов
         bool isSymbolOrDigit(String s) => RegExp(r'^[0-9\W]').hasMatch(s);
         bool isLatin(String s) => RegExp(r'^[a-zA-Z]').hasMatch(s);
         bool isCyrillic(String s) => RegExp(r'^[\u0400-\u04FF]').hasMatch(s);
 
-        // Проверяем категории для a и б
         final isASymbol = isSymbolOrDigit(a);
         final isBSymbol = isSymbolOrDigit(b);
         final isALatin = isLatin(a);
@@ -102,23 +98,19 @@ class FileUtils {
         final isACyrillic = isCyrillic(a);
         final isBCyrillic = isCyrillic(b);
 
-        // Сравниваем по категориям: символы/цифры → латиница → кириллица
         if (isASymbol && !isBSymbol) return -1;
         if (!isASymbol && isBSymbol) return 1;
-        if (isALatin && !isBLatin) return -1; // Латиница перед кириллицей
+        if (isALatin && !isBLatin) return -1;
         if (!isALatin && isBLatin) return 1;
-        if (isACyrillic && !isBCyrillic) return 1; // Кириллица после латиницы
+        if (isACyrillic && !isBCyrillic) return 1;
         if (!isACyrillic && isBCyrillic) return -1;
 
-        // Внутри категории: символы/цифры и латиница — игнорировать регистр
         if (isASymbol || isALatin) {
           return a.toLowerCase().compareTo(b.toLowerCase());
         }
-        // Для кириллицы — учитывать естественный порядок
         return a.compareTo(b);
       }
 
-      // Сортируем директории и файлы по имени
       directories.sort(
         (a, b) => compareNames(p.basename(a.path), p.basename(b.path)),
       );
@@ -126,10 +118,8 @@ class FileUtils {
         (a, b) => compareNames(p.basename(a.path), p.basename(b.path)),
       );
 
-      // Объединяем: сначала директории, затем файлы
       final sortedEntities = [...directories, ...files];
 
-      // Пагинация
       final startIndex = page * pageSize;
       final endIndex = min(startIndex + pageSize, sortedEntities.length);
       if (startIndex >= sortedEntities.length) {
@@ -145,6 +135,7 @@ class FileUtils {
   }
 
   /// Проверяет имя файла на валидность.
+  /// [fileName] Имя файла для проверки.
   static String? validateFileName(String fileName) {
     if (fileName.isEmpty) {
       return 'Имя файла не может быть пустым';

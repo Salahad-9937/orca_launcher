@@ -5,6 +5,7 @@ import 'widgets/app_menu_bar.dart';
 import 'widgets/editor_header.dart';
 import 'widgets/text_editor.dart';
 
+/// Главный экран приложения с текстовым редактором и меню.
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 

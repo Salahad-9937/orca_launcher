@@ -6,6 +6,13 @@ import 'create_folder_dialog.dart';
 import 'file_system_picker_app_bar.dart';
 import 'file_system_entity_list.dart';
 
+/// Виджет для выбора файлов или директорий в файловой системе.
+/// [onPathSelected] Коллбэк, вызываемый при выборе пути.
+/// [isFilePicker] Флаг, указывающий, выбираются ли файлы или директории.
+/// [initialPath] Начальный путь для отображения.
+/// [titlePrefix] Префикс заголовка панели.
+/// [showConfirmButton] Показывать ли кнопку подтверждения.
+/// [allowedExtensions] Список разрешённых расширений файлов.
 class FileSystemPicker extends StatefulWidget {
   final Function(String) onPathSelected;
   final bool isFilePicker;
@@ -28,6 +35,11 @@ class FileSystemPicker extends StatefulWidget {
   FileSystemPickerState createState() => FileSystemPickerState();
 }
 
+/// Состояние виджета выбора файловой системы, управляющее навигацией и поиском.
+/// [_currentPath] Текущий путь в файловой системе.
+/// [_searchSubject] Поток для обработки поисковых запросов.
+/// [_searchQuery] Текущий поисковый запрос.
+/// [_showHidden] Флаг отображения скрытых файлов.
 class FileSystemPickerState extends State<FileSystemPicker> {
   String _currentPath = '';
   final BehaviorSubject<String> _searchSubject = BehaviorSubject<String>();

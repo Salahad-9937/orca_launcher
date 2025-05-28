@@ -1,8 +1,18 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:rxdart/rxdart.dart';
-import '../../core/widgets/custom_text_field.dart'; // Новый импорт
+import '../../core/widgets/custom_text_field.dart';
 
+/// Верхняя панель для виджета выбора файловой системы с поиском и действиями.
+/// [currentPath] Текущий путь в файловой системе.
+/// [titlePrefix] Префикс заголовка панели.
+/// [isFilePicker] Флаг, указывающий, выбираются ли файлы или директории.
+/// [showConfirmButton] Показывать ли кнопку подтверждения.
+/// [showHidden] Показывать ли скрытые файлы.
+/// [searchSubject] Поток для обработки поисковых запросов.
+/// [onConfirm] Коллбэк для подтверждения выбора.
+/// [onCreateFolder] Коллбэк для создания новой папки.
+/// [onToggleHidden] Коллбэк для переключения видимости скрытых файлов.
 class FileSystemPickerAppBar extends StatefulWidget
     implements PreferredSizeWidget {
   final String currentPath;
@@ -35,6 +45,9 @@ class FileSystemPickerAppBar extends StatefulWidget
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 }
 
+/// Состояние верхней панели, управляющее поиском и подписками.
+/// [_searchController] Контроллер для поля ввода поиска.
+/// [_searchSubscription] Подписка на поток поисковых запросов.
 class FileSystemPickerAppBarState extends State<FileSystemPickerAppBar> {
   final TextEditingController _searchController = TextEditingController();
   late StreamSubscription<String> _searchSubscription;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+/// Виджет меню справки приложения.
 class HelpMenu extends StatelessWidget {
   const HelpMenu({super.key});
 

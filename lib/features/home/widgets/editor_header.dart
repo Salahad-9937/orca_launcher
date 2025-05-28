@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+/// Заголовок для редактора входного файла.
 class EditorHeader extends StatelessWidget {
   const EditorHeader({super.key});
 

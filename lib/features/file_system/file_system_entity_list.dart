@@ -3,6 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import '../../core/utils/file_utils.dart';
 
+/// Виджет для отображения списка файлов и директорий в текущей папке.
+/// [currentPath] Текущий путь в файловой системе.
+/// [isFilePicker] Флаг, указывающий, выбираются ли файлы или директории.
+/// [showHidden] Показывать ли скрытые файлы.
+/// [searchQuery] Поисковый запрос для фильтрации.
+/// [onPathSelected] Коллбэк, вызываемый при выборе пути.
+/// [onNavigateBack] Коллбэк для перехода в родительскую директорию.
+/// [allowedExtensions] Список разрешённых расширений файлов.
 class FileSystemEntityList extends StatefulWidget {
   final String currentPath;
   final bool isFilePicker;
@@ -10,7 +18,7 @@ class FileSystemEntityList extends StatefulWidget {
   final String searchQuery;
   final Function(String) onPathSelected;
   final VoidCallback onNavigateBack;
-  final List<String>? allowedExtensions; // Новый параметр для фильтрации
+  final List<String>? allowedExtensions;
 
   const FileSystemEntityList({
     super.key,
@@ -27,6 +35,13 @@ class FileSystemEntityList extends StatefulWidget {
   FileSystemEntityListState createState() => FileSystemEntityListState();
 }
 
+/// Состояние виджета, управляющее загрузкой и отображением списка файлов и директорий.
+/// [_scrollController] Контроллер прокрутки списка.
+/// [_entities] Список отображаемых файлов и директорий.
+/// [_isLoading] Флаг состояния загрузки.
+/// [_hasMore] Флаг наличия дополнительных элементов для загрузки.
+/// [_page] Текущая страница для пагинации.
+/// [_pageSize] Количество элементов на странице.
 class FileSystemEntityListState extends State<FileSystemEntityList> {
   final ScrollController _scrollController = ScrollController();
   final List<FileSystemEntity> _entities = [];
@@ -62,6 +77,7 @@ class FileSystemEntityListState extends State<FileSystemEntityList> {
     }
   }
 
+  /// Загружает дополнительные файлы и директории для отображения.
   Future<void> _loadMoreEntities() async {
     if (_isLoading || !_hasMore) return;
     setState(() {
@@ -74,7 +90,7 @@ class FileSystemEntityListState extends State<FileSystemEntityList> {
       searchQuery: widget.searchQuery,
       page: _page,
       pageSize: _pageSize,
-      allowedExtensions: widget.allowedExtensions, // Передаём фильтр
+      allowedExtensions: widget.allowedExtensions,
     );
     setState(() {
       _entities.addAll(newEntities);

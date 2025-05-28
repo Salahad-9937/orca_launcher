@@ -3,16 +3,17 @@ import 'dart:io';
 import '../models/app_error.dart';
 import 'file_service.dart';
 
+/// Класс для обработки операций с файлами, включая запуск ORCA и управление файлами.
+/// [_fileService] Сервис для выполнения операций с файлами.
 class FileHandler {
   final FileService _fileService;
 
   FileHandler(this._fileService);
 
   /// Запускает ORCA с указанным входным файлом и сохраняет вывод в выходной файл.
-  /// [orcaPath] - полный путь к исполняемому файлу ORCA (например, /path/to/orca_6_0_1/orca).
-  /// [inputFilePath] - путь к входному файлу (.inp).
-  /// [outputFilePath] - путь к выходному файлу (.out).
-  /// Возвращает [Right] с выводом команды или [Left] с ошибкой.
+  /// [orcaPath] Полный путь к исполняемому файлу ORCA.
+  /// [inputFilePath] Путь к входному файлу (.inp).
+  /// [outputFilePath] Путь к выходному файлу (.out).
   Future<Either<AppError, String>> runOrca(
     String orcaPath,
     String inputFilePath,
@@ -36,7 +37,7 @@ class FileHandler {
   }
 
   /// Открывает файл по указанному пути.
-  /// Возвращает [Right] с содержимым файла или [Left] с ошибкой.
+  /// [path] Путь к файлу.
   Future<Either<AppError, String>> openFile(String path) async {
     try {
       final content = await _fileService.openFile(path);
@@ -54,7 +55,9 @@ class FileHandler {
   }
 
   /// Сохраняет файл с указанным именем и содержимым в заданной директории.
-  /// Возвращает [Right] с полным путём файла или [Left] с ошибкой.
+  /// [path] Путь к директории.
+  /// [fileName] Имя файла.
+  /// [content] Содержимое файла.
   Future<Either<AppError, String>> saveFile(
     String path,
     String fileName,
@@ -76,7 +79,9 @@ class FileHandler {
   }
 
   /// Сохраняет существующий файл по указанному пути.
-  /// Возвращает [Right] с полным путём файла или [Left] с ошибкой.
+  /// [filePath] Полный путь к файлу.
+  /// [fileName] Имя файла.
+  /// [content] Содержимое файла.
   Future<Either<AppError, String>> saveExistingFile(
     String filePath,
     String fileName,

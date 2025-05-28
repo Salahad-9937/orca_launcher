@@ -1,8 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
-import '../../core/widgets/custom_text_field.dart'; // Новый импорт
+import '../../core/widgets/custom_text_field.dart';
 
+/// Диалоговое окно для создания новой папки в указанной директории.
+/// [currentPath] Текущий путь, где будет создана папка.
+/// [onFolderCreated] Коллбэк, вызываемый после создания папки.
 class CreateFolderDialog extends StatefulWidget {
   final String currentPath;
   final VoidCallback onFolderCreated;
@@ -17,6 +20,9 @@ class CreateFolderDialog extends StatefulWidget {
   CreateFolderDialogState createState() => CreateFolderDialogState();
 }
 
+/// Состояние диалогового окна для создания папки, управляющее вводом имени и валидацией.
+/// [_folderNameController] Контроллер для поля ввода имени папки.
+/// [_folderErrorText] Текст ошибки при валидации имени папки.
 class CreateFolderDialogState extends State<CreateFolderDialog> {
   final TextEditingController _folderNameController = TextEditingController();
   String? _folderErrorText;

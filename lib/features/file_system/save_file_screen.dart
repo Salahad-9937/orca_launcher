@@ -6,9 +6,12 @@ import '../../core/models/directory_state.dart';
 import '../../core/utils/file_utils.dart';
 import '../../core/utils/error_display.dart';
 import '../../core/services/file_handler.dart';
-import '../../core/widgets/custom_text_field.dart'; // Новый импорт
+import '../../core/widgets/custom_text_field.dart';
 import '../file_system/file_system_picker.dart';
 
+/// Экран для сохранения файла с выбором имени и директории.
+/// [onSave] Коллбэк, вызываемый после сохранения файла.
+/// [initialPath] Начальный путь для сохранения.
 class SaveFileScreen extends StatefulWidget {
   final Function(String, String) onSave;
   final String? initialPath;
@@ -19,6 +22,10 @@ class SaveFileScreen extends StatefulWidget {
   SaveFileScreenState createState() => SaveFileScreenState();
 }
 
+/// Состояние экрана сохранения файла, управляющее вводом имени и выбором директории.
+/// [_fileNameController] Контроллер для поля ввода имени файла.
+/// [_fileErrorText] Текст ошибки при валидации имени файла.
+/// [_selectedPath] Выбранный путь для сохранения файла.
 class SaveFileScreenState extends State<SaveFileScreen> {
   final TextEditingController _fileNameController = TextEditingController();
   String? _fileErrorText;
@@ -31,6 +38,7 @@ class SaveFileScreenState extends State<SaveFileScreen> {
     _initSelectedPath();
   }
 
+  /// Инициализирует начальный путь для сохранения файла.
   void _initSelectedPath() {
     final directoryState = Provider.of<DirectoryState>(context, listen: false);
     _selectedPath =
@@ -45,6 +53,7 @@ class SaveFileScreenState extends State<SaveFileScreen> {
     super.dispose();
   }
 
+  /// Обрабатывает сохранение файла с валидацией и уведомлением.
   void _handleSave() async {
     final fileName = _fileNameController.text.trim();
     final fileNameError = FileUtils.validateFileName(fileName);

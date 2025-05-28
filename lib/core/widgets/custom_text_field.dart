@@ -1,21 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+/// Виджет текстового поля с поддержкой кастомизации и управления прокруткой.
+/// [controller] Контроллер для управления текстом.
+/// [focusNode] Нода фокуса для управления фокусом.
+/// [decoration] Декорация поля ввода.
+/// [style] Стиль текста в поле.
+/// [autofocus] Автофокус при загрузке.
+/// [keyboardType] Тип клавиатуры.
+/// [textInputAction] Действие кнопки на клавиатуре.
+/// [onChanged] Коллбэк при изменении текста.
+/// [maxLines] Максимальное количество строк.
+/// [scrollPhysics] Физика прокрутки.
+/// [textAlignVertical] Вертикальное выравнивание текста.
 class CustomTextField extends StatefulWidget {
-  final TextEditingController? controller; // Контроллер для управления текстом
-  final FocusNode? focusNode; // Нода фокуса для управления фокусом
-  final InputDecoration?
-  decoration; // Декорация поля ввода (рамка, подсказки и т.д.)
-  final TextStyle? style; // Стиль текста в поле
-  final bool autofocus; // Автофокус при загрузке
-  final TextInputType? keyboardType; // Тип клавиатуры (например, multiline)
-  final TextInputAction?
-  textInputAction; // Действие кнопки на клавиатуре (например, "Готово")
-  final ValueChanged<String>? onChanged; // Коллбэк при изменении текста
-  final int? maxLines; // Максимальное количество строк
-  final ScrollPhysics? scrollPhysics; // Физика прокрутки
-  final TextAlignVertical?
-  textAlignVertical; // Вертикальное выравнивание текста
+  final TextEditingController? controller;
+  final FocusNode? focusNode;
+  final InputDecoration? decoration;
+  final TextStyle? style;
+  final bool autofocus;
+  final TextInputType? keyboardType;
+  final TextInputAction? textInputAction;
+  final ValueChanged<String>? onChanged;
+  final int? maxLines;
+  final ScrollPhysics? scrollPhysics;
+  final TextAlignVertical? textAlignVertical;
 
   const CustomTextField({
     super.key,
@@ -36,27 +45,29 @@ class CustomTextField extends StatefulWidget {
   CustomTextFieldState createState() => CustomTextFieldState();
 }
 
+/// Состояние для виджета CustomTextField, управляющее прокруткой и обработкой клавиш.
+/// [_effectiveController] Контроллер для управления текстом.
+/// [_effectiveFocusNode] Нода фокуса для управления фокусом.
+/// [_scrollController] Контроллер прокрутки.
+/// [_startKey] Ключ для начала текста.
+/// [_endKey] Ключ для конца текста.
 class CustomTextFieldState extends State<CustomTextField> {
   late TextEditingController _effectiveController;
   late FocusNode _effectiveFocusNode;
   late ScrollController _scrollController;
-  final _startKey = GlobalKey(); // Ключ для начала текста
-  final _endKey = GlobalKey(); // Ключ для конца текста
+  final _startKey = GlobalKey();
+  final _endKey = GlobalKey();
 
   @override
   void initState() {
     super.initState();
-    // Используем переданный контроллер или создаём новый
     _effectiveController = widget.controller ?? TextEditingController();
-    // Используем переданную ноду фокуса или создаём новую
     _effectiveFocusNode = widget.focusNode ?? FocusNode();
-    // Создаём контроллер прокрутки
     _scrollController = ScrollController();
   }
 
   @override
   void dispose() {
-    // Уничтожаем только если они не были переданы извне
     if (widget.controller == null) {
       _effectiveController.dispose();
     }
@@ -67,10 +78,10 @@ class CustomTextFieldState extends State<CustomTextField> {
     super.dispose();
   }
 
-  // Прокрутка к позиции курсора
+  /// Прокручивает поле к позиции курсора.
+  /// [cursorPosition] Позиция курсора в тексте.
   void _scrollToCursor(int cursorPosition) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Даём время на рендеринг
       Future.delayed(const Duration(milliseconds: 100), () {
         if (!mounted) return;
 
@@ -85,13 +96,15 @@ class CustomTextFieldState extends State<CustomTextField> {
           key.currentContext!,
           duration: const Duration(milliseconds: 200),
           curve: Curves.easeOut,
-          alignment: isStart ? 0.0 : 1.0, // 0.0 для начала, 1.0 для конца
+          alignment: isStart ? 0.0 : 1.0,
         );
       });
     });
   }
 
-  // Метод для обработки нажатий клавиш
+  /// Обрабатывает события клавиш для управления выделением и прокруткой.
+  /// [node] Нода фокуса.
+  /// [event] Событие клавиатуры.
   KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
     if (event is! KeyDownEvent) return KeyEventResult.ignored;
 
@@ -99,11 +112,10 @@ class CustomTextFieldState extends State<CustomTextField> {
     final selection = _effectiveController.selection;
     int offset = selection.baseOffset;
 
-    // Проверка на валидность позиции курсора
     if (offset < 0 || offset > text.length) {
       offset = text.isEmpty ? 0 : text.length;
       _effectiveController.selection = TextSelection.collapsed(offset: offset);
-      _scrollToCursor(offset); // Прокрутка при коррекции позиции
+      _scrollToCursor(offset);
       return KeyEventResult.handled;
     }
 
@@ -111,16 +123,14 @@ class CustomTextFieldState extends State<CustomTextField> {
     int charCount = 0;
     int currentLineIndex = 0;
 
-    // Находим текущую строку и её начальную позицию
     for (int i = 0; i < lines.length; i++) {
       if (charCount + lines[i].length + 1 > offset) {
         currentLineIndex = i;
         break;
       }
-      charCount += lines[i].length + 1; // +1 для символа новой строки
+      charCount += lines[i].length + 1;
     }
 
-    // Проверяем, зажат ли Shift (левый или правый)
     final bool isShiftPressed =
         HardwareKeyboard.instance.logicalKeysPressed.contains(
           LogicalKeyboardKey.shiftLeft,
@@ -129,52 +139,41 @@ class CustomTextFieldState extends State<CustomTextField> {
           LogicalKeyboardKey.shiftRight,
         );
 
-    // Отладочный вывод для отслеживания нажатий
+    final int anchor = selection.baseOffset;
 
-    // Проверяем, зажат ли Shift для выделения текста
-    final int anchor = selection.baseOffset; // Точка начала выделения
-
-    // Обработка Home и Numpad 7 (Home)
     if (event.logicalKey == LogicalKeyboardKey.home ||
         event.logicalKey == LogicalKeyboardKey.numpad7) {
-      final newOffset = charCount; // Начало текущей строки
+      final newOffset = charCount;
       _effectiveController.selection =
           isShiftPressed
               ? TextSelection(baseOffset: anchor, extentOffset: newOffset)
               : TextSelection.collapsed(offset: newOffset);
       return KeyEventResult.handled;
-    }
-    // Обработка End и Numpad 1 (End)
-    else if (event.logicalKey == LogicalKeyboardKey.end ||
+    } else if (event.logicalKey == LogicalKeyboardKey.end ||
         event.logicalKey == LogicalKeyboardKey.numpad1) {
-      final newOffset =
-          charCount + lines[currentLineIndex].length; // Конец текущей строки
+      final newOffset = charCount + lines[currentLineIndex].length;
       _effectiveController.selection =
           isShiftPressed
               ? TextSelection(baseOffset: anchor, extentOffset: newOffset)
               : TextSelection.collapsed(offset: newOffset);
       return KeyEventResult.handled;
-    }
-    // Обработка PageUp и Numpad 9 (PageUp)
-    else if (event.logicalKey == LogicalKeyboardKey.pageUp ||
+    } else if (event.logicalKey == LogicalKeyboardKey.pageUp ||
         event.logicalKey == LogicalKeyboardKey.numpad9) {
-      const newOffset = 0; // Начало текста
+      const newOffset = 0;
       _effectiveController.selection =
           isShiftPressed
               ? TextSelection(baseOffset: anchor, extentOffset: newOffset)
               : TextSelection.collapsed(offset: newOffset);
-      _scrollToCursor(newOffset); // Прокрутка к началу текста
+      _scrollToCursor(newOffset);
       return KeyEventResult.handled;
-    }
-    // Обработка PageDown и Numpad 3 (PageDown)
-    else if (event.logicalKey == LogicalKeyboardKey.pageDown ||
+    } else if (event.logicalKey == LogicalKeyboardKey.pageDown ||
         event.logicalKey == LogicalKeyboardKey.numpad3) {
-      final newOffset = text.length; // Конец текста
+      final newOffset = text.length;
       _effectiveController.selection =
           isShiftPressed
               ? TextSelection(baseOffset: anchor, extentOffset: newOffset)
               : TextSelection.collapsed(offset: newOffset);
-      _scrollToCursor(newOffset); // Прокрутка к концу текста
+      _scrollToCursor(newOffset);
       return KeyEventResult.handled;
     }
 
@@ -184,7 +183,7 @@ class CustomTextFieldState extends State<CustomTextField> {
   @override
   Widget build(BuildContext context) {
     return Focus(
-      onKeyEvent: _handleKeyEvent, // Перехватываем события клавиш
+      onKeyEvent: _handleKeyEvent,
       child: LayoutBuilder(
         builder: (context, constraints) {
           return Stack(
@@ -203,13 +202,11 @@ class CustomTextFieldState extends State<CustomTextField> {
                 textAlignVertical: widget.textAlignVertical,
                 scrollController: _scrollController,
               ),
-              // Невидимый виджет для начала текста
               Positioned(
                 left: 0,
                 top: 0,
                 child: SizedBox(key: _startKey, width: 0, height: 0),
               ),
-              // Невидимый виджет для конца текста
               Positioned(
                 left: 0,
                 top: constraints.maxHeight,

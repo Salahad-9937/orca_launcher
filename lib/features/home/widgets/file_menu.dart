@@ -9,6 +9,7 @@ import '../../file_system/save_file_screen.dart';
 import '../../file_system/file_system_picker.dart';
 import '../../settings/settings_screen.dart';
 
+/// Виджет меню "Файл" с командами для работы с файлами и настройками.
 class FileMenu extends StatelessWidget {
   const FileMenu({super.key});
 
@@ -135,6 +136,11 @@ class FileMenu extends StatelessWidget {
     );
   }
 
+  /// Открывает диалог "Сохранить как" для сохранения файла.
+  /// [context] Контекст для отображения диалога.
+  /// [editorState] Состояние редактора.
+  /// [directoryState] Состояние директорий.
+  /// [fileHandler] Обработчик файлов.
   void _showSaveAsDialog(
     BuildContext context,
     EditorState editorState,

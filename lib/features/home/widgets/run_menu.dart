@@ -8,6 +8,7 @@ import '../../../core/utils/error_display.dart';
 import '../../../core/services/file_handler.dart';
 import '../../file_system/file_system_picker.dart';
 
+/// Меню для запуска ORCA с текущим или выбранным файлом.
 class RunMenu extends StatelessWidget {
   const RunMenu({super.key});
 
@@ -54,7 +55,6 @@ class RunMenu extends StatelessWidget {
               }
               return;
             }
-            // Показываем диалог подтверждения
             final bool? confirm = await showDialog<bool>(
               context: context,
               builder:
@@ -76,7 +76,6 @@ class RunMenu extends StatelessWidget {
                   ),
             );
             if (confirm != true || !context.mounted) return;
-            // Сохраняем текущий файл перед запуском
             final saveResult = await fileHandler.saveExistingFile(
               editorState.currentFilePath!,
               editorState.currentFileName,
