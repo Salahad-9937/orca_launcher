@@ -37,17 +37,22 @@ class CreateFolderDialogState extends State<CreateFolderDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('Создать новую папку'),
-      content: CustomTextField(
-        controller: _folderNameController,
-        decoration: InputDecoration(
-          labelText: 'Имя папки',
-          errorText: _folderErrorText,
+      content: SizedBox(
+        width: double.maxFinite,
+        child: CustomTextField(
+          controller: _folderNameController,
+          decoration: InputDecoration(
+            labelText: 'Имя папки',
+            errorText: _folderErrorText,
+          ),
+          onChanged: (value) {
+            setState(() {
+              _folderErrorText = null;
+            });
+          },
+          maxLines: 1, // Явно задаём однострочный ввод
+          keyboardType: TextInputType.text, // Однострочная клавиатура
         ),
-        onChanged: (value) {
-          setState(() {
-            _folderErrorText = null;
-          });
-        },
       ),
       actions: [
         TextButton(
