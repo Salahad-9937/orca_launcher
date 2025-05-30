@@ -1,6 +1,9 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'scroll_handler.dart';
 import 'key_event_handler.dart';
+import 'mouse_event_handler.dart';
 import 'text_painter_utils.dart';
 
 /// Виджет текстового поля с поддержкой кастомизации и управления прокруткой.
@@ -41,13 +44,14 @@ class CustomFileTextField extends StatefulWidget {
   CustomFileTextFieldState createState() => CustomFileTextFieldState();
 }
 
-/// Состояние для виджета CustomTextField, управляющее прокруткой и обработкой клавиш.
+/// Состояние для виджета CustomTextField, управляющее прокруткой и обработкой событий.
 /// [_effectiveController] Контроллер для управления текстом.
 /// [_effectiveFocusNode] Нода фокуса для управления фокусом.
 /// [_horizontalScrollController] Контроллер горизонтальной прокрутки.
 /// [_verticalScrollController] Контроллер вертикальной прокрутки.
 /// [_scrollHandler] Обработчик прокрутки.
 /// [_keyEventHandler] Обработчик событий клавиатуры.
+/// [_mouseEventHandler] Обработчик событий мыши.
 class CustomFileTextFieldState extends State<CustomFileTextField> {
   late TextEditingController _effectiveController;
   late FocusNode _effectiveFocusNode;
@@ -55,6 +59,7 @@ class CustomFileTextFieldState extends State<CustomFileTextField> {
   late ScrollController _verticalScrollController;
   late ScrollHandler _scrollHandler;
   late KeyEventHandler _keyEventHandler;
+  late MouseEventHandler _mouseEventHandler;
 
   @override
   void initState() {
@@ -75,19 +80,32 @@ class CustomFileTextFieldState extends State<CustomFileTextField> {
       controller: _effectiveController,
       scrollToCursor: _scrollHandler.scrollToCursor,
     );
+    _mouseEventHandler = MouseEventHandler(
+      controller: _effectiveController,
+      focusNode: _effectiveFocusNode,
+      scrollToCursor: _scrollHandler.scrollToCursor,
+      style: widget.style,
+      verticalScrollController: _verticalScrollController,
+    );
 
     _effectiveFocusNode.addListener(() {
       if (_effectiveFocusNode.hasFocus) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _effectiveFocusNode.requestFocus();
-          _scrollHandler.scrollToCursor(
-            _effectiveController.selection.baseOffset,
-          );
+          if (_effectiveController.selection.baseOffset >= 0) {
+            _scrollHandler.scrollToCursor(
+              _effectiveController.selection.baseOffset,
+            );
+          }
         });
       }
     });
     _effectiveController.addListener(() {
-      _scrollHandler.scrollToCursor(_effectiveController.selection.baseOffset);
+      if (_effectiveController.selection.baseOffset >= 0) {
+        _scrollHandler.scrollToCursor(
+          _effectiveController.selection.baseOffset,
+        );
+      }
     });
   }
 
@@ -121,9 +139,16 @@ class CustomFileTextFieldState extends State<CustomFileTextField> {
           );
 
           return GestureDetector(
-            onTap: () {
-              _effectiveFocusNode.requestFocus();
-            },
+            onTapDown:
+                (details) =>
+                    _mouseEventHandler.handleTap(details, context, tapCount: 1),
+            onDoubleTapDown:
+                (details) =>
+                    _mouseEventHandler.handleTap(details, context, tapCount: 2),
+            // onTripleTapDown: (details) => _mouseEventHandler.handleTap(details, context, tapCount: 3),
+            onPanUpdate:
+                (details) =>
+                    _mouseEventHandler.handleDragUpdate(details, context),
             child: Container(
               decoration: BoxDecoration(
                 border: Border.all(color: Theme.of(context).dividerColor),
