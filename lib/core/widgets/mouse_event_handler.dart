@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 /// Класс для обработки событий мыши в текстовом поле.
@@ -14,7 +15,9 @@ class MouseEventHandler {
   final ScrollController verticalScrollController;
   DateTime? _lastDoubleTapTime;
   Offset? _lastDoubleTapPosition;
-  static const _doubleTapTimeout = Duration(milliseconds: 500);
+  static const _doubleTapTimeout = Duration(
+    milliseconds: 300,
+  ); // Увеличено до 1 секунды
   static const _tapProximityThreshold = 20.0;
 
   MouseEventHandler({

@@ -1,4 +1,6 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'scroll_handler.dart';
 import 'key_event_handler.dart';
 import 'mouse_event_handler.dart';
@@ -120,6 +122,78 @@ class CustomFileTextFieldState extends State<CustomFileTextField> {
     super.dispose();
   }
 
+  /// Показывает контекстное меню при правом клике.
+  void _showContextMenu(BuildContext context, Offset globalPosition) {
+    final RenderBox overlay =
+        Overlay.of(context).context.findRenderObject() as RenderBox;
+    final selection = _effectiveController.selection;
+    final hasSelection = selection.isValid && !selection.isCollapsed;
+
+    showMenu(
+      context: context,
+      position: RelativeRect.fromRect(
+        Rect.fromPoints(globalPosition, globalPosition),
+        Offset.zero & overlay.size,
+      ),
+      items: [
+        PopupMenuItem(
+          enabled: hasSelection,
+          onTap: () {
+            final selectedText = _effectiveController.text.substring(
+              selection.start,
+              selection.end,
+            );
+            Clipboard.setData(ClipboardData(text: selectedText));
+          },
+          child: const Text('Копировать'),
+        ),
+        PopupMenuItem(
+          enabled: true,
+          onTap: () async {
+            final clipboardData = await Clipboard.getData(Clipboard.kTextPlain);
+            if (clipboardData != null && clipboardData.text != null) {
+              final currentText = _effectiveController.text;
+              final selection = _effectiveController.selection;
+              final newText = currentText.replaceRange(
+                selection.start,
+                selection.end,
+                clipboardData.text!,
+              );
+              _effectiveController.value = TextEditingValue(
+                text: newText,
+                selection: TextSelection.collapsed(
+                  offset: selection.start + clipboardData.text!.length,
+                ),
+              );
+            }
+          },
+          child: const Text('Вставить'),
+        ),
+        PopupMenuItem(
+          enabled: hasSelection,
+          onTap: () {
+            final selectedText = _effectiveController.text.substring(
+              selection.start,
+              selection.end,
+            );
+            Clipboard.setData(ClipboardData(text: selectedText));
+            final currentText = _effectiveController.text;
+            final newText = currentText.replaceRange(
+              selection.start,
+              selection.end,
+              '',
+            );
+            _effectiveController.value = TextEditingValue(
+              text: newText,
+              selection: TextSelection.collapsed(offset: selection.start),
+            );
+          },
+          child: const Text('Вырезать'),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Focus(
@@ -151,6 +225,8 @@ class CustomFileTextFieldState extends State<CustomFileTextField> {
             onPanUpdate:
                 (details) =>
                     _mouseEventHandler.handleDragUpdate(details, context),
+            onSecondaryTapDown:
+                (details) => _showContextMenu(context, details.globalPosition),
             child: Container(
               decoration: BoxDecoration(
                 border: Border.all(color: Theme.of(context).dividerColor),
