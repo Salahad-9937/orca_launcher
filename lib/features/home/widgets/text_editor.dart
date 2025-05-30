@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/models/editor_state.dart';
-import '../../../core/widgets/custom_text_field.dart';
+import '../../../core/widgets/custom_text_field2.dart';
 import '../components/line_number_column.dart';
 
 /// Виджет текстового редактора с колонкой номеров строк.
@@ -25,8 +25,7 @@ class TextEditorState extends State<TextEditor> {
   final TextEditingController _textController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   late EditorState _editorState;
-  List<Map<String, dynamic>>?
-  _lineInfo; // Список: {physicalLine: int, visualLines: int}
+  List<Map<String, dynamic>>? _lineInfo;
   double? _lineHeight;
   int _currentLine = 1;
 
@@ -86,12 +85,8 @@ class TextEditorState extends State<TextEditor> {
     }
 
     final lines = text.isEmpty ? [''] : text.split('\n');
-    final availableWidth =
-        MediaQuery.of(context).size.width -
-        56; // Учитываем ширину LineNumberColumn и padding
     int charCount = 0;
     int currentPhysicalLine = 0;
-    int visualLineCount = 0;
 
     // Определяем текущую физическую строку
     for (int i = 0; i < lines.length; i++) {
@@ -102,67 +97,17 @@ class TextEditorState extends State<TextEditor> {
         break;
       }
       charCount += lineLength + 1;
-      final painter = TextPainter(
-        text: TextSpan(
-          text: lines[i],
-          style: const TextStyle(fontSize: 14, height: 1.5),
-        ),
-        textDirection: TextDirection.ltr,
-      );
-      painter.layout(maxWidth: availableWidth);
-      final metrics = painter.computeLineMetrics();
-      visualLineCount +=
-          metrics.isEmpty
-              ? 1
-              : metrics.length; // Пустая строка имеет 1 визуальную строку
     }
-
-    // Вычисляем визуальную строку для текущей физической строки
-    final currentLineText = lines[currentPhysicalLine];
-    final textPainter = TextPainter(
-      text: TextSpan(
-        text: currentLineText,
-        style: const TextStyle(fontSize: 14, height: 1.5),
-      ),
-      textDirection: TextDirection.ltr,
-    );
-    textPainter.layout(maxWidth: availableWidth);
-
-    final lineOffset = offset - charCount;
-    final lineMetrics = textPainter.computeLineMetrics();
-    int currentVisualLine = 0;
-    int currentCharPos = 0;
-
-    // Обработка пустых строк или курсора в начале/конце строки
-    if (currentLineText.isEmpty) {
-      currentVisualLine =
-          0; // Для пустой строки всегда первая визуальная строка
-    } else {
-      // Находим визуальную строку, в которой находится курсор
-      for (int i = 0; i < lineMetrics.length; i++) {
-        final metric = lineMetrics[i];
-        final charsInLine =
-            (metric.width / textPainter.preferredLineHeight).ceil();
-        if (currentCharPos + charsInLine > lineOffset) {
-          currentVisualLine = i;
-          break;
-        }
-        currentCharPos += charsInLine;
-      }
-    }
-
-    // Добавляем визуальные строки текущей физической строки
-    visualLineCount += currentVisualLine + 1;
 
     setState(() {
-      _currentLine = visualLineCount;
+      _currentLine = currentPhysicalLine + 1;
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final editorState = Provider.of<EditorState>(context);
-    const textStyle = TextStyle(fontSize: 14, height: 1.5);
+    const textStyle = TextStyle(fontSize: 14, height: 1.5, color: Colors.black);
 
     _lineHeight ??= () {
       final textPainter = TextPainter(
@@ -173,9 +118,6 @@ class TextEditorState extends State<TextEditor> {
     }();
 
     _lineInfo ??= () {
-      final availableWidth =
-          MediaQuery.of(context).size.width -
-          56; // Учитываем ширину LineNumberColumn и padding
       final lines =
           editorState.editorContent.isEmpty
               ? ['']
@@ -183,18 +125,9 @@ class TextEditorState extends State<TextEditor> {
       List<Map<String, dynamic>> info = [];
 
       for (int i = 0; i < lines.length; i++) {
-        final textPainter = TextPainter(
-          text: TextSpan(text: lines[i], style: textStyle),
-          textDirection: TextDirection.ltr,
-        );
-        textPainter.layout(maxWidth: availableWidth);
-        final metrics = textPainter.computeLineMetrics();
         info.add({
           'physicalLine': i + 1,
-          'visualLines':
-              metrics.isEmpty
-                  ? 1
-                  : metrics.length, // Пустая строка имеет 1 визуальную строку
+          'visualLines': 1, // Без переноса строк каждая строка — 1 визуальная
         });
       }
 
@@ -205,48 +138,32 @@ class TextEditorState extends State<TextEditor> {
           : info;
     }();
 
-    return SingleChildScrollView(
-      controller: _scrollController,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          LineNumberColumn(
-            lineInfo: _lineInfo!,
-            lineHeight: _lineHeight!,
-            textStyle: textStyle,
-            currentLine: _currentLine,
-          ),
-          Expanded(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight:
-                    _lineHeight! *
-                    _lineInfo!.fold<int>(
-                      0,
-                      (sum, info) => sum + (info['visualLines'] as int),
-                    ),
-              ),
-              child: CustomTextField(
-                controller: _textController,
-                focusNode: _focusNode,
-                maxLines: null,
-                scrollPhysics: const NeverScrollableScrollPhysics(),
-                textAlignVertical: TextAlignVertical.top,
-                keyboardType: TextInputType.multiline,
-                textInputAction: TextInputAction.newline,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(
-                    vertical: 8,
-                    horizontal: 8,
-                  ),
-                ),
-                style: textStyle,
-              ),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        LineNumberColumn(
+          lineInfo: _lineInfo!,
+          lineHeight: _lineHeight!,
+          textStyle: textStyle,
+          currentLine: _currentLine,
+        ),
+        Expanded(
+          child: SizedBox(
+            width:
+                MediaQuery.of(context).size.width -
+                56, // Учитываем LineNumberColumn
+            height: MediaQuery.of(context).size.height,
+            child: CustomTextField(
+              controller: _textController,
+              focusNode: _focusNode,
+              maxLines: null,
+              keyboardType: TextInputType.multiline,
+              textInputAction: TextInputAction.newline,
+              style: textStyle,
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
