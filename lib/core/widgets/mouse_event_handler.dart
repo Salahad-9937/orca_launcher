@@ -31,19 +31,27 @@ class MouseEventHandler {
     _updateSelection(details, context, tapCount: tapCount);
   }
 
+  /// Обрабатывает начало перетаскивания мыши.
+  void handleDragStart(DragStartDetails details, BuildContext context) {
+    focusNode.requestFocus();
+    _updateSelection(details, context, isDragStart: true);
+  }
+
   /// Обрабатывает событие перетаскивания мыши для выделения текста.
   void handleDragUpdate(DragUpdateDetails details, BuildContext context) {
     _updateSelection(details, context);
   }
 
   /// Обновляет выделение текста на основе позиции мыши.
-  /// [details] Детали события (TapDownDetails или DragUpdateDetails).
+  /// [details] Детали события (TapDownDetails, DragStartDetails или DragUpdateDetails).
   /// [context] Контекст для получения RenderBox.
   /// [tapCount] Количество тапов (1 - одиночный, 2 - двойной, 3 - тройной).
+  /// [isDragStart] Флаг, указывающий на начало перетаскивания.
   void _updateSelection(
     dynamic details,
     BuildContext context, {
     int tapCount = 1,
+    bool isDragStart = false,
   }) {
     final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
     if (renderBox == null) return;
@@ -93,8 +101,11 @@ class MouseEventHandler {
         );
         newOffset = lineRange.end; // Прокручиваем к концу строки
       }
+    } else if (details is DragStartDetails || isDragStart) {
+      // Начало перетаскивания: установка начальной точки выделения
+      controller.selection = TextSelection.collapsed(offset: newOffset);
     } else if (details is DragUpdateDetails) {
-      // Перетаскивание: обновление выделения
+      // Перетаскивание: обновление выделения от начальной точки
       final currentSelection = controller.selection;
       controller.selection = TextSelection(
         baseOffset:

@@ -1,6 +1,4 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'scroll_handler.dart';
 import 'key_event_handler.dart';
 import 'mouse_event_handler.dart';
@@ -146,6 +144,9 @@ class CustomFileTextFieldState extends State<CustomFileTextField> {
                 (details) =>
                     _mouseEventHandler.handleTap(details, context, tapCount: 2),
             // onTripleTapDown: (details) => _mouseEventHandler.handleTap(details, context, tapCount: 3),
+            onPanStart:
+                (details) =>
+                    _mouseEventHandler.handleDragStart(details, context),
             onPanUpdate:
                 (details) =>
                     _mouseEventHandler.handleDragUpdate(details, context),
