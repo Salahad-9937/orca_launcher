@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 /// Виджет текстового поля с поддержкой кастомизации и управления прокруткой.
 /// [controller] Контроллер для управления текстом.
 /// [focusNode] Нода фокуса для управления фокусом.
+/// [lineNumberScrollController] Контроллер прокрутки для синхронизации с LineNumberColumn.
 /// [style] Стиль текста в поле.
 /// [autofocus] Автофокус при загрузке.
 /// [keyboardType] Тип клавиатуры.
@@ -13,6 +14,7 @@ import 'package:flutter/services.dart';
 class CustomTextField extends StatefulWidget {
   final TextEditingController? controller;
   final FocusNode? focusNode;
+  final ScrollController? lineNumberScrollController;
   final TextStyle? style;
   final bool autofocus;
   final TextInputType? keyboardType;
@@ -24,6 +26,7 @@ class CustomTextField extends StatefulWidget {
     super.key,
     this.controller,
     this.focusNode,
+    this.lineNumberScrollController,
     this.style,
     this.autofocus = false,
     this.keyboardType,
@@ -41,11 +44,13 @@ class CustomTextField extends StatefulWidget {
 /// [_effectiveFocusNode] Нода фокуса для управления фокусом.
 /// [_horizontalScrollController] Контроллер горизонтальной прокрутки.
 /// [_verticalScrollController] Контроллер вертикальной прокрутки.
+/// [_isPageUpDown] Флаг для обработки PageUp/PageDown.
 class CustomTextFieldState extends State<CustomTextField> {
   late TextEditingController _effectiveController;
   late FocusNode _effectiveFocusNode;
   late ScrollController _horizontalScrollController;
   late ScrollController _verticalScrollController;
+  bool _isPageUpDown = false;
 
   @override
   void initState() {
@@ -54,6 +59,31 @@ class CustomTextFieldState extends State<CustomTextField> {
     _effectiveFocusNode = widget.focusNode ?? FocusNode();
     _horizontalScrollController = ScrollController();
     _verticalScrollController = ScrollController();
+
+    // Синхронизация прокрутки с LineNumberColumn
+    if (widget.lineNumberScrollController != null) {
+      _verticalScrollController.addListener(() {
+        if (_verticalScrollController.hasClients &&
+            widget.lineNumberScrollController!.hasClients &&
+            _verticalScrollController.position.pixels !=
+                widget.lineNumberScrollController!.position.pixels) {
+          widget.lineNumberScrollController!.jumpTo(
+            _verticalScrollController.position.pixels,
+          );
+        }
+      });
+      widget.lineNumberScrollController!.addListener(() {
+        if (_verticalScrollController.hasClients &&
+            widget.lineNumberScrollController!.hasClients &&
+            _verticalScrollController.position.pixels !=
+                widget.lineNumberScrollController!.position.pixels) {
+          _verticalScrollController.jumpTo(
+            widget.lineNumberScrollController!.position.pixels,
+          );
+        }
+      });
+    }
+
     _effectiveFocusNode.addListener(() {
       if (_effectiveFocusNode.hasFocus) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -96,7 +126,7 @@ class CustomTextFieldState extends State<CustomTextField> {
           const TextStyle(overflow: TextOverflow.visible, color: Colors.black);
 
       final textPainter = TextPainter(
-        text: TextSpan(text: text.substring(0, cursorPosition), style: style),
+        text: TextSpan(text: text, style: style),
         textDirection: TextDirection.ltr,
       )..layout();
 
@@ -107,28 +137,39 @@ class CustomTextFieldState extends State<CustomTextField> {
       );
 
       // Прокрутка по горизонтали
-      final horizontalOffset = cursorOffset.dx;
       if (_horizontalScrollController.hasClients) {
         final maxScroll = _horizontalScrollController.position.maxScrollExtent;
-        final newOffset = (horizontalOffset - 100).clamp(0.0, maxScroll);
+        final horizontalOffset = cursorOffset.dx;
+        final newHorizontalOffset =
+            _isPageUpDown
+                ? (cursorPosition == 0 ? 0.0 : maxScroll)
+                : (horizontalOffset - 100).clamp(0.0, maxScroll);
         _horizontalScrollController.animateTo(
-          newOffset,
+          newHorizontalOffset,
           duration: const Duration(milliseconds: 200),
           curve: Curves.easeOut,
         );
       }
 
       // Прокрутка по вертикали
-      final verticalOffset = cursorOffset.dy;
       if (_verticalScrollController.hasClients) {
         final maxScroll = _verticalScrollController.position.maxScrollExtent;
-        final newOffset = (verticalOffset - 100).clamp(0.0, maxScroll);
+        final totalHeight = textPainter.height;
+        final newVerticalOffset =
+            _isPageUpDown
+                ? (cursorPosition == 0 ? 0.0 : totalHeight - 100).clamp(
+                  0.0,
+                  maxScroll,
+                )
+                : (cursorOffset.dy - 100).clamp(0.0, maxScroll);
         _verticalScrollController.animateTo(
-          newOffset,
+          newVerticalOffset,
           duration: const Duration(milliseconds: 200),
           curve: Curves.easeOut,
         );
       }
+
+      _isPageUpDown = false; // Сбрасываем флаг после обработки
     });
   }
 
@@ -191,6 +232,7 @@ class CustomTextFieldState extends State<CustomTextField> {
       return KeyEventResult.handled;
     } else if (event.logicalKey == LogicalKeyboardKey.pageUp ||
         event.logicalKey == LogicalKeyboardKey.numpad9) {
+      _isPageUpDown = true;
       const newOffset = 0;
       _effectiveController.selection =
           isShiftPressed
@@ -200,6 +242,7 @@ class CustomTextFieldState extends State<CustomTextField> {
       return KeyEventResult.handled;
     } else if (event.logicalKey == LogicalKeyboardKey.pageDown ||
         event.logicalKey == LogicalKeyboardKey.numpad3) {
+      _isPageUpDown = true;
       final newOffset = text.length;
       _effectiveController.selection =
           isShiftPressed
@@ -281,7 +324,7 @@ class CustomTextFieldState extends State<CustomTextField> {
                       backgroundCursorColor: Colors.grey,
                       selectionColor:
                           Theme.of(context).textSelectionTheme.selectionColor ??
-                          Colors.blue.withOpacity(0.4), // Подсветка выделения
+                          Colors.blue.withOpacity(0.4),
                       textAlign: TextAlign.left,
                       textDirection: TextDirection.ltr,
                       maxLines: widget.maxLines,

@@ -13,17 +13,17 @@ class TextEditor extends StatefulWidget {
 }
 
 /// Состояние текстового редактора, управляющее текстом и синхронизацией.
-/// [_scrollController] Контроллер прокрутки.
 /// [_textController] Контроллер для управления текстом.
 /// [_focusNode] Нода фокуса для управления фокусом.
+/// [_lineNumberScrollController] Контроллер прокрутки для LineNumberColumn.
 /// [_editorState] Состояние редактора.
 /// [_lineInfo] Список информации о строках (номер физической строки и количество визуальных строк).
 /// [_lineHeight] Кэш высоты строки.
 /// [_currentLine] Текущая визуальная строка курсора.
 class TextEditorState extends State<TextEditor> {
-  final ScrollController _scrollController = ScrollController();
   final TextEditingController _textController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
+  final ScrollController _lineNumberScrollController = ScrollController();
   late EditorState _editorState;
   List<Map<String, dynamic>>? _lineInfo;
   double? _lineHeight;
@@ -57,8 +57,8 @@ class TextEditorState extends State<TextEditor> {
   void dispose() {
     _editorState.removeListener(_updateTextController);
     _textController.dispose();
-    _scrollController.dispose();
     _focusNode.dispose();
+    _lineNumberScrollController.dispose();
     super.dispose();
   }
 
@@ -141,11 +141,18 @@ class TextEditorState extends State<TextEditor> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        LineNumberColumn(
-          lineInfo: _lineInfo!,
-          lineHeight: _lineHeight!,
-          textStyle: textStyle,
-          currentLine: _currentLine,
+        SizedBox(
+          width: 56,
+          height: MediaQuery.of(context).size.height,
+          child: SingleChildScrollView(
+            controller: _lineNumberScrollController,
+            child: LineNumberColumn(
+              lineInfo: _lineInfo!,
+              lineHeight: _lineHeight!,
+              textStyle: textStyle,
+              currentLine: _currentLine,
+            ),
+          ),
         ),
         Expanded(
           child: SizedBox(
@@ -156,6 +163,7 @@ class TextEditorState extends State<TextEditor> {
             child: CustomTextField(
               controller: _textController,
               focusNode: _focusNode,
+              lineNumberScrollController: _lineNumberScrollController,
               maxLines: null,
               keyboardType: TextInputType.multiline,
               textInputAction: TextInputAction.newline,
