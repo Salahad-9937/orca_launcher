@@ -12,6 +12,10 @@ class MouseEventHandler {
   final void Function(int) scrollToCursor;
   final TextStyle? style;
   final ScrollController verticalScrollController;
+  DateTime? _lastDoubleTapTime;
+  Offset? _lastDoubleTapPosition;
+  static const _doubleTapTimeout = Duration(milliseconds: 500);
+  static const _tapProximityThreshold = 20.0;
 
   MouseEventHandler({
     required this.controller,
@@ -25,10 +29,10 @@ class MouseEventHandler {
   void handleTap(
     TapDownDetails details,
     BuildContext context, {
-    int tapCount = 1,
+    bool isDoubleTap = false,
   }) {
     focusNode.requestFocus();
-    _updateSelection(details, context, tapCount: tapCount);
+    _updateSelection(details, context, isDoubleTap: isDoubleTap);
   }
 
   /// Обрабатывает начало перетаскивания мыши.
@@ -45,12 +49,12 @@ class MouseEventHandler {
   /// Обновляет выделение текста на основе позиции мыши.
   /// [details] Детали события (TapDownDetails, DragStartDetails или DragUpdateDetails).
   /// [context] Контекст для получения RenderBox.
-  /// [tapCount] Количество тапов (1 - одиночный, 2 - двойной, 3 - тройной).
+  /// [isDoubleTap] Флаг, указывающий на двойной тап.
   /// [isDragStart] Флаг, указывающий на начало перетаскивания.
   void _updateSelection(
     dynamic details,
     BuildContext context, {
-    int tapCount = 1,
+    bool isDoubleTap = false,
     bool isDragStart = false,
   }) {
     final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
@@ -81,25 +85,44 @@ class MouseEventHandler {
     int newOffset = offset.offset.clamp(0, controller.text.length);
 
     if (details is TapDownDetails) {
-      if (tapCount == 1) {
-        // Одиночный клик: установка курсора
-        controller.selection = TextSelection.collapsed(offset: newOffset);
-      } else if (tapCount == 2) {
-        // Двойной клик: выделение слова
+      final now = DateTime.now();
+      if (!isDoubleTap &&
+          _lastDoubleTapTime != null &&
+          _lastDoubleTapPosition != null) {
+        final timeDiff = now.difference(_lastDoubleTapTime!);
+        final positionDiff = (localPosition - _lastDoubleTapPosition!).distance;
+        if (timeDiff <= _doubleTapTimeout &&
+            positionDiff <= _tapProximityThreshold) {
+          // Одиночный тап после двойного: выделение строки
+          final lineRange = _getLineRange(newOffset, text);
+          controller.selection = TextSelection(
+            baseOffset: lineRange.start,
+            extentOffset: lineRange.end,
+          );
+          newOffset = lineRange.end; // Прокручиваем к концу строки
+          _lastDoubleTapTime = null; // Сбрасываем таймер
+          _lastDoubleTapPosition = null;
+        } else {
+          // Одиночный тап: установка курсора
+          controller.selection = TextSelection.collapsed(offset: newOffset);
+          _lastDoubleTapTime = null;
+          _lastDoubleTapPosition = null;
+        }
+      } else if (isDoubleTap) {
+        // Двойной тап: выделение слова
         final wordRange = _getWordRange(newOffset, text);
         controller.selection = TextSelection(
           baseOffset: wordRange.start,
           extentOffset: wordRange.end,
         );
         newOffset = wordRange.end; // Прокручиваем к концу слова
-      } else if (tapCount == 3) {
-        // Тройной клик: выделение строки
-        final lineRange = _getLineRange(newOffset, text);
-        controller.selection = TextSelection(
-          baseOffset: lineRange.start,
-          extentOffset: lineRange.end,
-        );
-        newOffset = lineRange.end; // Прокручиваем к концу строки
+        _lastDoubleTapTime = now;
+        _lastDoubleTapPosition = localPosition;
+      } else {
+        // Одиночный тап: установка курсора
+        controller.selection = TextSelection.collapsed(offset: newOffset);
+        _lastDoubleTapTime = null;
+        _lastDoubleTapPosition = null;
       }
     } else if (details is DragStartDetails || isDragStart) {
       // Начало перетаскивания: установка начальной точки выделения

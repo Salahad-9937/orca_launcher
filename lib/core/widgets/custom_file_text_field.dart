@@ -138,12 +138,13 @@ class CustomFileTextFieldState extends State<CustomFileTextField> {
 
           return GestureDetector(
             onTapDown:
-                (details) =>
-                    _mouseEventHandler.handleTap(details, context, tapCount: 1),
+                (details) => _mouseEventHandler.handleTap(details, context),
             onDoubleTapDown:
-                (details) =>
-                    _mouseEventHandler.handleTap(details, context, tapCount: 2),
-            // onTripleTapDown: (details) => _mouseEventHandler.handleTap(details, context, tapCount: 3),
+                (details) => _mouseEventHandler.handleTap(
+                  details,
+                  context,
+                  isDoubleTap: true,
+                ),
             onPanStart:
                 (details) =>
                     _mouseEventHandler.handleDragStart(details, context),
