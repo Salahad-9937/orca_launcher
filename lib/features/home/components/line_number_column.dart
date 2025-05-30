@@ -30,6 +30,7 @@ class LineNumberColumn extends StatelessWidget {
           width: 40,
           color: Colors.grey[200],
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children:
                 lineInfo.expand((info) {
                   final physicalLine = info['physicalLine'] as int;
@@ -41,18 +42,22 @@ class LineNumberColumn extends StatelessWidget {
                     SizedBox(
                       height: lineHeight,
                       child: Align(
-                        alignment: Alignment.centerRight,
+                        alignment: Alignment.topRight,
                         child: Padding(
                           padding: const EdgeInsets.only(right: 8),
                           child: Text(
                             '$physicalLine',
                             style: textStyle.copyWith(
                               color:
-                                  visualLineCounter + 1 == currentLine
+                                  visualLineCounter + 1 <= currentLine &&
+                                          currentLine <=
+                                              visualLineCounter + visualLines
                                       ? Colors.black
                                       : Colors.grey,
                               fontWeight:
-                                  visualLineCounter + 1 == currentLine
+                                  visualLineCounter + 1 <= currentLine &&
+                                          currentLine <=
+                                              visualLineCounter + visualLines
                                       ? FontWeight.bold
                                       : FontWeight.normal,
                             ),

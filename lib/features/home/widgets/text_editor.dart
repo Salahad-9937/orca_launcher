@@ -51,6 +51,7 @@ class TextEditorState extends State<TextEditor> {
     _editorState = Provider.of<EditorState>(context, listen: false);
     _lineHeight = null;
     _lineInfo = null;
+    _updateCurrentLine();
   }
 
   @override
@@ -92,39 +93,13 @@ class TextEditorState extends State<TextEditor> {
     int currentPhysicalLine = 0;
     int visualLineCount = 0;
 
+    // Определяем текущую физическую строку
     for (int i = 0; i < lines.length; i++) {
       if (charCount + lines[i].length + 1 > offset) {
         currentPhysicalLine = i;
         break;
       }
       charCount += lines[i].length + 1;
-    }
-
-    final textPainter = TextPainter(
-      text: TextSpan(
-        text: lines[currentPhysicalLine],
-        style: const TextStyle(fontSize: 14, height: 1.5),
-      ),
-      textDirection: TextDirection.ltr,
-    );
-    textPainter.layout(maxWidth: availableWidth);
-
-    final lineOffset = offset - charCount;
-    final visualLines = textPainter.computeLineMetrics();
-    int currentVisualLine = 0;
-    int charPos = 0;
-
-    for (var line in visualLines) {
-      final charsInLine = (line.width / textPainter.preferredLineHeight).ceil();
-      if (charPos + charsInLine > lineOffset) {
-        break;
-      }
-      currentVisualLine++;
-      charPos += charsInLine;
-    }
-
-    // Подсчитываем общее количество визуальных строк до текущей физической строки
-    for (int i = 0; i < currentPhysicalLine; i++) {
       final painter = TextPainter(
         text: TextSpan(
           text: lines[i],
@@ -135,6 +110,35 @@ class TextEditorState extends State<TextEditor> {
       painter.layout(maxWidth: availableWidth);
       visualLineCount += painter.computeLineMetrics().length;
     }
+
+    // Вычисляем визуальную строку для текущей физической строки
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: lines[currentPhysicalLine],
+        style: const TextStyle(fontSize: 14, height: 1.5),
+      ),
+      textDirection: TextDirection.ltr,
+    );
+    textPainter.layout(maxWidth: availableWidth);
+
+    final lineOffset = offset - charCount;
+    final lineMetrics = textPainter.computeLineMetrics();
+    int currentVisualLine = 0;
+    int currentCharPos = 0;
+
+    // Находим визуальную строку, в которой находится курсор
+    for (int i = 0; i < lineMetrics.length; i++) {
+      final metric = lineMetrics[i];
+      final charsInLine =
+          (metric.width / textPainter.preferredLineHeight).ceil();
+      if (currentCharPos + charsInLine > lineOffset) {
+        currentVisualLine = i;
+        break;
+      }
+      currentCharPos += charsInLine;
+    }
+
+    // Добавляем визуальные строки текущей физической строки
     visualLineCount += currentVisualLine + 1;
 
     setState(() {
