@@ -11,7 +11,7 @@ import 'package:flutter/services.dart';
 /// [textInputAction] Действие кнопки на клавиатуре.
 /// [onChanged] Коллбэк при изменении текста.
 /// [maxLines] Максимальное количество строк.
-class CustomTextField extends StatefulWidget {
+class CustomFileTextField extends StatefulWidget {
   final TextEditingController? controller;
   final FocusNode? focusNode;
   final ScrollController? lineNumberScrollController;
@@ -22,7 +22,7 @@ class CustomTextField extends StatefulWidget {
   final ValueChanged<String>? onChanged;
   final int? maxLines;
 
-  const CustomTextField({
+  const CustomFileTextField({
     super.key,
     this.controller,
     this.focusNode,
@@ -36,7 +36,7 @@ class CustomTextField extends StatefulWidget {
   });
 
   @override
-  CustomTextFieldState createState() => CustomTextFieldState();
+  CustomFileTextFieldState createState() => CustomFileTextFieldState();
 }
 
 /// Состояние для виджета CustomTextField, управляющее прокруткой и обработкой клавиш.
@@ -45,7 +45,7 @@ class CustomTextField extends StatefulWidget {
 /// [_horizontalScrollController] Контроллер горизонтальной прокрутки.
 /// [_verticalScrollController] Контроллер вертикальной прокрутки.
 /// [_isPageUpDown] Флаг для обработки PageUp/PageDown.
-class CustomTextFieldState extends State<CustomTextField> {
+class CustomFileTextFieldState extends State<CustomFileTextField> {
   late TextEditingController _effectiveController;
   late FocusNode _effectiveFocusNode;
   late ScrollController _horizontalScrollController;

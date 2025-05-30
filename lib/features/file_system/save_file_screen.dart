@@ -6,7 +6,7 @@ import '../../core/models/directory_state.dart';
 import '../../core/utils/file_utils.dart';
 import '../../core/utils/error_display.dart';
 import '../../core/services/file_handler.dart';
-import '../../core/widgets/custom_text_field.dart';
+import '../../core/widgets/custom_dialog_text_field_.dart';
 import '../file_system/file_system_picker.dart';
 
 /// Экран для сохранения файла с выбором имени и директории.
@@ -98,7 +98,7 @@ class SaveFileScreenState extends State<SaveFileScreen> {
             child: Row(
               children: [
                 Expanded(
-                  child: CustomTextField(
+                  child: CustomDialogTextField(
                     controller: _fileNameController,
                     decoration: InputDecoration(
                       labelText: 'Имя файла (с .inp)',

@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:rxdart/rxdart.dart';
-import '../../core/widgets/custom_text_field.dart';
+import '../../core/widgets/custom_dialog_text_field_.dart';
 
 /// Верхняя панель для виджета выбора файловой системы с поиском и действиями.
 /// [currentPath] Текущий путь в файловой системе.
@@ -104,7 +104,7 @@ class FileSystemPickerAppBarState extends State<FileSystemPickerAppBar> {
           width: 300,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
-            child: CustomTextField(
+            child: CustomDialogTextField(
               controller: _searchController,
               decoration: const InputDecoration(
                 hintText: 'Поиск',

@@ -13,7 +13,7 @@ import 'package:flutter/services.dart';
 /// [maxLines] Максимальное количество строк.
 /// [scrollPhysics] Физика прокрутки.
 /// [textAlignVertical] Вертикальное выравнивание текста.
-class CustomTextField extends StatefulWidget {
+class CustomDialogTextField extends StatefulWidget {
   final TextEditingController? controller;
   final FocusNode? focusNode;
   final InputDecoration? decoration;
@@ -26,7 +26,7 @@ class CustomTextField extends StatefulWidget {
   final ScrollPhysics? scrollPhysics;
   final TextAlignVertical? textAlignVertical;
 
-  const CustomTextField({
+  const CustomDialogTextField({
     super.key,
     this.controller,
     this.focusNode,
@@ -42,7 +42,7 @@ class CustomTextField extends StatefulWidget {
   });
 
   @override
-  CustomTextFieldState createState() => CustomTextFieldState();
+  CustomDialogTextFieldState createState() => CustomDialogTextFieldState();
 }
 
 /// Состояние для виджета CustomTextField, управляющее прокруткой и обработкой клавиш.
@@ -51,7 +51,7 @@ class CustomTextField extends StatefulWidget {
 /// [_scrollController] Контроллер прокрутки.
 /// [_startKey] Ключ для начала текста.
 /// [_endKey] Ключ для конца текста.
-class CustomTextFieldState extends State<CustomTextField> {
+class CustomDialogTextFieldState extends State<CustomDialogTextField> {
   late TextEditingController _effectiveController;
   late FocusNode _effectiveFocusNode;
   late ScrollController _scrollController;

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/models/editor_state.dart';
-import '../../../core/widgets/custom_text_field2.dart';
+import '../../../core/widgets/custom_file_text_field.dart';
 import '../components/line_number_column.dart';
 
 /// Виджет текстового редактора с колонкой номеров строк.
@@ -165,7 +165,7 @@ class TextEditorState extends State<TextEditor> {
                 MediaQuery.of(context).size.width -
                 56, // Учитываем LineNumberColumn
             height: MediaQuery.of(context).size.height,
-            child: CustomTextField(
+            child: CustomFileTextField(
               controller: _textController,
               focusNode: _focusNode,
               lineNumberScrollController: _lineNumberScrollController,

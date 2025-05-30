@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
-import '../../core/widgets/custom_text_field.dart';
+import '../../core/widgets/custom_dialog_text_field_.dart';
 
 /// Диалоговое окно для создания новой папки в указанной директории.
 /// [currentPath] Текущий путь, где будет создана папка.
@@ -39,7 +39,7 @@ class CreateFolderDialogState extends State<CreateFolderDialog> {
       title: const Text('Создать новую папку'),
       content: SizedBox(
         width: double.maxFinite,
-        child: CustomTextField(
+        child: CustomDialogTextField(
           controller: _folderNameController,
           decoration: InputDecoration(
             labelText: 'Имя папки',

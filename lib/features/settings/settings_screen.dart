@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:provider/provider.dart';
 import 'package:path/path.dart' as p;
 import '../../core/models/directory_state.dart';
-import '../../core/widgets/custom_text_field.dart';
+import '../../core/widgets/custom_dialog_text_field_.dart';
 import '../file_system/file_system_picker.dart';
 
 /// Экран настроек для управления директориями приложения.
@@ -84,7 +84,7 @@ class SettingsScreenState extends State<SettingsScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CustomTextField(
+                CustomDialogTextField(
                   controller: _orcaController,
                   decoration: InputDecoration(
                     labelText: 'Директория ORCA',
@@ -125,7 +125,7 @@ class SettingsScreenState extends State<SettingsScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            CustomTextField(
+            CustomDialogTextField(
               controller: _workingController,
               decoration: InputDecoration(
                 labelText: 'Рабочая директория',
