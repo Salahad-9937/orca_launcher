@@ -154,19 +154,45 @@ class CustomTextFieldState extends State<CustomTextField> {
       // Прокрутка по вертикали
       if (_verticalScrollController.hasClients) {
         final maxScroll = _verticalScrollController.position.maxScrollExtent;
-        final totalHeight = textPainter.height;
-        final newVerticalOffset =
-            _isPageUpDown
-                ? (cursorPosition == 0 ? 0.0 : totalHeight - 100).clamp(
-                  0.0,
-                  maxScroll,
-                )
-                : (cursorOffset.dy - 100).clamp(0.0, maxScroll);
-        _verticalScrollController.animateTo(
-          newVerticalOffset,
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOut,
-        );
+        final viewportHeight =
+            _verticalScrollController.position.viewportDimension;
+        final currentScroll = _verticalScrollController.position.pixels;
+
+        if (_isPageUpDown) {
+          final newVerticalOffset = cursorPosition == 0 ? 0.0 : maxScroll;
+          _verticalScrollController.animateTo(
+            newVerticalOffset,
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOut,
+          );
+        } else {
+          // Прокручиваем только если курсор не виден
+          final lineHeight =
+              style.height != null
+                  ? style.fontSize! * style.height!
+                  : style.fontSize! * 1.2;
+          final topBound = currentScroll + lineHeight;
+          final bottomBound = currentScroll + viewportHeight - lineHeight;
+
+          if (cursorOffset.dy < topBound) {
+            // Курсор выше видимой области
+            _verticalScrollController.animateTo(
+              (cursorOffset.dy - lineHeight).clamp(0.0, maxScroll),
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOut,
+            );
+          } else if (cursorOffset.dy > bottomBound) {
+            // Курсор ниже видимой области
+            _verticalScrollController.animateTo(
+              (cursorOffset.dy - viewportHeight + lineHeight * 2).clamp(
+                0.0,
+                maxScroll,
+              ),
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOut,
+            );
+          }
+        }
       }
 
       _isPageUpDown = false; // Сбрасываем флаг после обработки
@@ -304,8 +330,11 @@ class CustomTextFieldState extends State<CustomTextField> {
                   scrollDirection: Axis.horizontal,
                   controller: _horizontalScrollController,
                   child: SizedBox(
-                    width: textPainter.width + 16, // Учитываем padding
-                    height: height,
+                    width: textPainter.width + 32, // Учитываем padding
+                    height: textPainter.height.clamp(
+                      height - 32,
+                      double.infinity,
+                    ), // Минимальная высота = высота контейнера - padding
                     child: EditableText(
                       controller: _effectiveController,
                       focusNode: _effectiveFocusNode,

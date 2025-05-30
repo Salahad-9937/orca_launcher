@@ -25,7 +25,7 @@ class LineNumberColumn extends StatelessWidget {
 
     return Column(
       children: [
-        const SizedBox(height: 4),
+        const SizedBox(height: 8),
         Container(
           width: 40,
           color: Colors.grey[200],
@@ -83,6 +83,7 @@ class LineNumberColumn extends StatelessWidget {
                 }).toList(),
           ),
         ),
+        const SizedBox(height: 16),
       ],
     );
   }

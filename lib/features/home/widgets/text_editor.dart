@@ -144,13 +144,18 @@ class TextEditorState extends State<TextEditor> {
         SizedBox(
           width: 56,
           height: MediaQuery.of(context).size.height,
-          child: SingleChildScrollView(
-            controller: _lineNumberScrollController,
-            child: LineNumberColumn(
-              lineInfo: _lineInfo!,
-              lineHeight: _lineHeight!,
-              textStyle: textStyle,
-              currentLine: _currentLine,
+          child: ScrollConfiguration(
+            behavior: ScrollConfiguration.of(
+              context,
+            ).copyWith(scrollbars: false),
+            child: SingleChildScrollView(
+              controller: _lineNumberScrollController,
+              child: LineNumberColumn(
+                lineInfo: _lineInfo!,
+                lineHeight: _lineHeight!,
+                textStyle: textStyle,
+                currentLine: _currentLine,
+              ),
             ),
           ),
         ),
