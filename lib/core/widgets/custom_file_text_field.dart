@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'scroll_handler.dart';
+import 'key_event_handler.dart';
+import 'text_painter_utils.dart';
 
 /// Виджет текстового поля с поддержкой кастомизации и управления прокруткой.
 /// [controller] Контроллер для управления текстом.
@@ -44,13 +46,15 @@ class CustomFileTextField extends StatefulWidget {
 /// [_effectiveFocusNode] Нода фокуса для управления фокусом.
 /// [_horizontalScrollController] Контроллер горизонтальной прокрутки.
 /// [_verticalScrollController] Контроллер вертикальной прокрутки.
-/// [_isPageUpDown] Флаг для обработки PageUp/PageDown.
+/// [_scrollHandler] Обработчик прокрутки.
+/// [_keyEventHandler] Обработчик событий клавиатуры.
 class CustomFileTextFieldState extends State<CustomFileTextField> {
   late TextEditingController _effectiveController;
   late FocusNode _effectiveFocusNode;
   late ScrollController _horizontalScrollController;
   late ScrollController _verticalScrollController;
-  bool _isPageUpDown = false;
+  late ScrollHandler _scrollHandler;
+  late KeyEventHandler _keyEventHandler;
 
   @override
   void initState() {
@@ -59,41 +63,31 @@ class CustomFileTextFieldState extends State<CustomFileTextField> {
     _effectiveFocusNode = widget.focusNode ?? FocusNode();
     _horizontalScrollController = ScrollController();
     _verticalScrollController = ScrollController();
-
-    // Синхронизация прокрутки с LineNumberColumn
-    if (widget.lineNumberScrollController != null) {
-      _verticalScrollController.addListener(() {
-        if (_verticalScrollController.hasClients &&
-            widget.lineNumberScrollController!.hasClients &&
-            _verticalScrollController.position.pixels !=
-                widget.lineNumberScrollController!.position.pixels) {
-          widget.lineNumberScrollController!.jumpTo(
-            _verticalScrollController.position.pixels,
-          );
-        }
-      });
-      widget.lineNumberScrollController!.addListener(() {
-        if (_verticalScrollController.hasClients &&
-            widget.lineNumberScrollController!.hasClients &&
-            _verticalScrollController.position.pixels !=
-                widget.lineNumberScrollController!.position.pixels) {
-          _verticalScrollController.jumpTo(
-            widget.lineNumberScrollController!.position.pixels,
-          );
-        }
-      });
-    }
+    _scrollHandler = ScrollHandler(
+      verticalScrollController: _verticalScrollController,
+      horizontalScrollController: _horizontalScrollController,
+      lineNumberScrollController: widget.lineNumberScrollController,
+      controller: _effectiveController,
+      focusNode: _effectiveFocusNode,
+      style: widget.style,
+    );
+    _keyEventHandler = KeyEventHandler(
+      controller: _effectiveController,
+      scrollToCursor: _scrollHandler.scrollToCursor,
+    );
 
     _effectiveFocusNode.addListener(() {
       if (_effectiveFocusNode.hasFocus) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _effectiveFocusNode.requestFocus();
-          _scrollToCursor(_effectiveController.selection.baseOffset);
+          _scrollHandler.scrollToCursor(
+            _effectiveController.selection.baseOffset,
+          );
         });
       }
     });
     _effectiveController.addListener(() {
-      _scrollToCursor(_effectiveController.selection.baseOffset);
+      _scrollHandler.scrollToCursor(_effectiveController.selection.baseOffset);
     });
   }
 
@@ -110,208 +104,21 @@ class CustomFileTextFieldState extends State<CustomFileTextField> {
     super.dispose();
   }
 
-  /// Прокручивает поле к позиции курсора.
-  /// [cursorPosition] Позиция курсора в тексте.
-  void _scrollToCursor(int cursorPosition) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-
-      final text =
-          _effectiveController.text.isEmpty ? ' ' : _effectiveController.text;
-      final style =
-          widget.style?.copyWith(
-            overflow: TextOverflow.visible,
-            color: Colors.black,
-          ) ??
-          const TextStyle(overflow: TextOverflow.visible, color: Colors.black);
-
-      final textPainter = TextPainter(
-        text: TextSpan(text: text, style: style),
-        textDirection: TextDirection.ltr,
-      )..layout();
-
-      // Вычисляем позицию курсора
-      final cursorOffset = textPainter.getOffsetForCaret(
-        TextPosition(offset: cursorPosition),
-        Rect.zero,
-      );
-
-      // Прокрутка по горизонтали
-      if (_horizontalScrollController.hasClients) {
-        final maxScroll = _horizontalScrollController.position.maxScrollExtent;
-        final horizontalOffset = cursorOffset.dx;
-        final newHorizontalOffset =
-            _isPageUpDown
-                ? (cursorPosition == 0 ? 0.0 : maxScroll)
-                : (horizontalOffset - 100).clamp(0.0, maxScroll);
-        _horizontalScrollController.animateTo(
-          newHorizontalOffset,
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOut,
-        );
-      }
-
-      // Прокрутка по вертикали
-      if (_verticalScrollController.hasClients) {
-        final maxScroll = _verticalScrollController.position.maxScrollExtent;
-        final viewportHeight =
-            _verticalScrollController.position.viewportDimension;
-        final currentScroll = _verticalScrollController.position.pixels;
-
-        if (_isPageUpDown) {
-          final newVerticalOffset = cursorPosition == 0 ? 0.0 : maxScroll;
-          _verticalScrollController.animateTo(
-            newVerticalOffset,
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeOut,
-          );
-        } else {
-          // Прокручиваем только если курсор не виден
-          final lineHeight =
-              style.height != null
-                  ? style.fontSize! * style.height!
-                  : style.fontSize! * 1.2;
-          final topBound = currentScroll + lineHeight;
-          final bottomBound = currentScroll + viewportHeight - lineHeight;
-
-          if (cursorOffset.dy < topBound) {
-            // Курсор выше видимой области
-            _verticalScrollController.animateTo(
-              (cursorOffset.dy - lineHeight).clamp(0.0, maxScroll),
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeOut,
-            );
-          } else if (cursorOffset.dy > bottomBound) {
-            // Курсор ниже видимой области
-            _verticalScrollController.animateTo(
-              (cursorOffset.dy - viewportHeight + lineHeight * 2).clamp(
-                0.0,
-                maxScroll,
-              ),
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeOut,
-            );
-          }
-        }
-      }
-
-      _isPageUpDown = false; // Сбрасываем флаг после обработки
-    });
-  }
-
-  /// Обрабатывает события клавиш для управления выделением и прокруткой.
-  /// [node] Нода фокуса.
-  /// [event] Событие клавиатуры.
-  KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
-    if (event is! KeyDownEvent) return KeyEventResult.ignored;
-
-    final text = _effectiveController.text;
-    final selection = _effectiveController.selection;
-    int offset = selection.baseOffset;
-
-    if (offset < 0 || offset > text.length) {
-      offset = text.isEmpty ? 0 : text.length;
-      _effectiveController.selection = TextSelection.collapsed(offset: offset);
-      _scrollToCursor(offset);
-      return KeyEventResult.handled;
-    }
-
-    final lines = text.isEmpty ? [''] : text.split('\n');
-    int charCount = 0;
-    int currentLineIndex = 0;
-
-    for (int i = 0; i < lines.length; i++) {
-      if (charCount + lines[i].length + 1 > offset) {
-        currentLineIndex = i;
-        break;
-      }
-      charCount += lines[i].length + 1;
-    }
-
-    final bool isShiftPressed =
-        HardwareKeyboard.instance.logicalKeysPressed.contains(
-          LogicalKeyboardKey.shiftLeft,
-        ) ||
-        HardwareKeyboard.instance.logicalKeysPressed.contains(
-          LogicalKeyboardKey.shiftRight,
-        );
-
-    final int anchor = selection.baseOffset;
-
-    if (event.logicalKey == LogicalKeyboardKey.home ||
-        event.logicalKey == LogicalKeyboardKey.numpad7) {
-      final newOffset = charCount;
-      _effectiveController.selection =
-          isShiftPressed
-              ? TextSelection(baseOffset: anchor, extentOffset: newOffset)
-              : TextSelection.collapsed(offset: newOffset);
-      _scrollToCursor(newOffset);
-      return KeyEventResult.handled;
-    } else if (event.logicalKey == LogicalKeyboardKey.end ||
-        event.logicalKey == LogicalKeyboardKey.numpad1) {
-      final newOffset = charCount + lines[currentLineIndex].length;
-      _effectiveController.selection =
-          isShiftPressed
-              ? TextSelection(baseOffset: anchor, extentOffset: newOffset)
-              : TextSelection.collapsed(offset: newOffset);
-      _scrollToCursor(newOffset);
-      return KeyEventResult.handled;
-    } else if (event.logicalKey == LogicalKeyboardKey.pageUp ||
-        event.logicalKey == LogicalKeyboardKey.numpad9) {
-      _isPageUpDown = true;
-      const newOffset = 0;
-      _effectiveController.selection =
-          isShiftPressed
-              ? TextSelection(baseOffset: anchor, extentOffset: newOffset)
-              : TextSelection.collapsed(offset: newOffset);
-      _scrollToCursor(newOffset);
-      return KeyEventResult.handled;
-    } else if (event.logicalKey == LogicalKeyboardKey.pageDown ||
-        event.logicalKey == LogicalKeyboardKey.numpad3) {
-      _isPageUpDown = true;
-      final newOffset = text.length;
-      _effectiveController.selection =
-          isShiftPressed
-              ? TextSelection(baseOffset: anchor, extentOffset: newOffset)
-              : TextSelection.collapsed(offset: newOffset);
-      _scrollToCursor(newOffset);
-      return KeyEventResult.handled;
-    }
-
-    return KeyEventResult.ignored;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Focus(
-      onKeyEvent: _handleKeyEvent,
+      onKeyEvent: _keyEventHandler.handleKeyEvent,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          // Используем конечные размеры из constraints
           final double height =
               constraints.maxHeight.isFinite
                   ? constraints.maxHeight
                   : MediaQuery.of(context).size.height;
 
-          // Вычисляем ширину текста для предотвращения переноса строк
-          final textPainter = TextPainter(
-            text: TextSpan(
-              text:
-                  _effectiveController.text.isEmpty
-                      ? ' '
-                      : _effectiveController.text,
-              style:
-                  widget.style?.copyWith(
-                    overflow: TextOverflow.visible,
-                    color: Colors.black,
-                  ) ??
-                  const TextStyle(
-                    overflow: TextOverflow.visible,
-                    color: Colors.black,
-                  ),
-            ),
-            textDirection: TextDirection.ltr,
-          )..layout();
+          final textPainter = TextPainterUtils.createTextPainter(
+            text: _effectiveController.text,
+            style: widget.style,
+          );
 
           return GestureDetector(
             onTap: () {
@@ -330,11 +137,11 @@ class CustomFileTextFieldState extends State<CustomFileTextField> {
                   scrollDirection: Axis.horizontal,
                   controller: _horizontalScrollController,
                   child: SizedBox(
-                    width: textPainter.width + 32, // Учитываем padding
+                    width: textPainter.width + 32,
                     height: textPainter.height.clamp(
                       height - 32,
                       double.infinity,
-                    ), // Минимальная высота = высота контейнера - padding
+                    ),
                     child: EditableText(
                       controller: _effectiveController,
                       focusNode: _effectiveFocusNode,
