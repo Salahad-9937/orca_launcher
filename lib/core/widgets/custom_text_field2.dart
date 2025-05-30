@@ -41,15 +41,11 @@ class CustomTextField extends StatefulWidget {
 /// [_effectiveFocusNode] Нода фокуса для управления фокусом.
 /// [_horizontalScrollController] Контроллер горизонтальной прокрутки.
 /// [_verticalScrollController] Контроллер вертикальной прокрутки.
-/// [_startKey] Ключ для начала текста.
-/// [_endKey] Ключ для конца текста.
 class CustomTextFieldState extends State<CustomTextField> {
   late TextEditingController _effectiveController;
   late FocusNode _effectiveFocusNode;
   late ScrollController _horizontalScrollController;
   late ScrollController _verticalScrollController;
-  final _startKey = GlobalKey();
-  final _endKey = GlobalKey();
 
   @override
   void initState() {
@@ -62,8 +58,12 @@ class CustomTextFieldState extends State<CustomTextField> {
       if (_effectiveFocusNode.hasFocus) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _effectiveFocusNode.requestFocus();
+          _scrollToCursor(_effectiveController.selection.baseOffset);
         });
       }
+    });
+    _effectiveController.addListener(() {
+      _scrollToCursor(_effectiveController.selection.baseOffset);
     });
   }
 
@@ -84,23 +84,51 @@ class CustomTextFieldState extends State<CustomTextField> {
   /// [cursorPosition] Позиция курсора в тексте.
   void _scrollToCursor(int cursorPosition) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Future.delayed(const Duration(milliseconds: 100), () {
-        if (!mounted) return;
+      if (!mounted) return;
 
-        final isStart = cursorPosition == 0;
-        final key = isStart ? _startKey : _endKey;
+      final text =
+          _effectiveController.text.isEmpty ? ' ' : _effectiveController.text;
+      final style =
+          widget.style?.copyWith(
+            overflow: TextOverflow.visible,
+            color: Colors.black,
+          ) ??
+          const TextStyle(overflow: TextOverflow.visible, color: Colors.black);
 
-        if (key.currentContext == null) {
-          return;
-        }
+      final textPainter = TextPainter(
+        text: TextSpan(text: text.substring(0, cursorPosition), style: style),
+        textDirection: TextDirection.ltr,
+      )..layout();
 
-        Scrollable.ensureVisible(
-          key.currentContext!,
+      // Вычисляем позицию курсора
+      final cursorOffset = textPainter.getOffsetForCaret(
+        TextPosition(offset: cursorPosition),
+        Rect.zero,
+      );
+
+      // Прокрутка по горизонтали
+      final horizontalOffset = cursorOffset.dx;
+      if (_horizontalScrollController.hasClients) {
+        final maxScroll = _horizontalScrollController.position.maxScrollExtent;
+        final newOffset = (horizontalOffset - 100).clamp(0.0, maxScroll);
+        _horizontalScrollController.animateTo(
+          newOffset,
           duration: const Duration(milliseconds: 200),
           curve: Curves.easeOut,
-          alignment: isStart ? 0.0 : 1.0,
         );
-      });
+      }
+
+      // Прокрутка по вертикали
+      final verticalOffset = cursorOffset.dy;
+      if (_verticalScrollController.hasClients) {
+        final maxScroll = _verticalScrollController.position.maxScrollExtent;
+        final newOffset = (verticalOffset - 100).clamp(0.0, maxScroll);
+        _verticalScrollController.animateTo(
+          newOffset,
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+        );
+      }
     });
   }
 
@@ -150,6 +178,7 @@ class CustomTextFieldState extends State<CustomTextField> {
           isShiftPressed
               ? TextSelection(baseOffset: anchor, extentOffset: newOffset)
               : TextSelection.collapsed(offset: newOffset);
+      _scrollToCursor(newOffset);
       return KeyEventResult.handled;
     } else if (event.logicalKey == LogicalKeyboardKey.end ||
         event.logicalKey == LogicalKeyboardKey.numpad1) {
@@ -158,6 +187,7 @@ class CustomTextFieldState extends State<CustomTextField> {
           isShiftPressed
               ? TextSelection(baseOffset: anchor, extentOffset: newOffset)
               : TextSelection.collapsed(offset: newOffset);
+      _scrollToCursor(newOffset);
       return KeyEventResult.handled;
     } else if (event.logicalKey == LogicalKeyboardKey.pageUp ||
         event.logicalKey == LogicalKeyboardKey.numpad9) {
@@ -214,49 +244,57 @@ class CustomTextFieldState extends State<CustomTextField> {
             textDirection: TextDirection.ltr,
           )..layout();
 
-          return Container(
-            decoration: BoxDecoration(
-              border: Border.all(color: Theme.of(context).dividerColor),
-              borderRadius: BorderRadius.circular(4.0),
-            ),
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.vertical,
-              controller: _verticalScrollController,
+          return GestureDetector(
+            onTap: () {
+              _effectiveFocusNode.requestFocus();
+            },
+            child: Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: Theme.of(context).dividerColor),
+                borderRadius: BorderRadius.circular(4.0),
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
               child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                controller: _horizontalScrollController,
-                child: SizedBox(
-                  width: textPainter.width + 16, // Учитываем padding
-                  height: height,
-                  child: EditableText(
-                    controller: _effectiveController,
-                    focusNode: _effectiveFocusNode,
-                    style:
-                        widget.style?.copyWith(
-                          overflow: TextOverflow.visible,
-                          color: Colors.black,
-                        ) ??
-                        const TextStyle(
-                          overflow: TextOverflow.visible,
-                          color: Colors.black,
-                        ),
-                    cursorColor:
-                        Theme.of(context).textSelectionTheme.cursorColor ??
-                        Colors.blue,
-                    backgroundCursorColor: Colors.grey,
-                    textAlign: TextAlign.left,
-                    textDirection: TextDirection.ltr,
-                    maxLines: widget.maxLines,
-                    keyboardType:
-                        widget.keyboardType ?? TextInputType.multiline,
-                    textInputAction: widget.textInputAction,
-                    onChanged: widget.onChanged,
-                    autofocus: widget.autofocus,
-                    scrollPhysics: const ClampingScrollPhysics(),
-                    rendererIgnoresPointer: false,
-                    enableInteractiveSelection: true,
-                    selectionControls: MaterialTextSelectionControls(),
+                scrollDirection: Axis.vertical,
+                controller: _verticalScrollController,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  controller: _horizontalScrollController,
+                  child: SizedBox(
+                    width: textPainter.width + 16, // Учитываем padding
+                    height: height,
+                    child: EditableText(
+                      controller: _effectiveController,
+                      focusNode: _effectiveFocusNode,
+                      style:
+                          widget.style?.copyWith(
+                            overflow: TextOverflow.visible,
+                            color: Colors.black,
+                          ) ??
+                          const TextStyle(
+                            overflow: TextOverflow.visible,
+                            color: Colors.black,
+                          ),
+                      cursorColor:
+                          Theme.of(context).textSelectionTheme.cursorColor ??
+                          Colors.blue,
+                      backgroundCursorColor: Colors.grey,
+                      selectionColor:
+                          Theme.of(context).textSelectionTheme.selectionColor ??
+                          Colors.blue.withOpacity(0.4), // Подсветка выделения
+                      textAlign: TextAlign.left,
+                      textDirection: TextDirection.ltr,
+                      maxLines: widget.maxLines,
+                      keyboardType:
+                          widget.keyboardType ?? TextInputType.multiline,
+                      textInputAction: widget.textInputAction,
+                      onChanged: widget.onChanged,
+                      autofocus: widget.autofocus,
+                      scrollPhysics: const ClampingScrollPhysics(),
+                      rendererIgnoresPointer: false,
+                      enableInteractiveSelection: true,
+                      selectionControls: MaterialTextSelectionControls(),
+                    ),
                   ),
                 ),
               ),
