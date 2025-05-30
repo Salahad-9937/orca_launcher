@@ -17,15 +17,18 @@ class TextEditor extends StatefulWidget {
 /// [_textController] Контроллер для управления текстом.
 /// [_focusNode] Нода фокуса для управления фокусом.
 /// [_editorState] Состояние редактора.
-/// [_lineCount] Кэш количества строк.
+/// [_lineInfo] Список информации о строках (номер физической строки и количество визуальных строк).
 /// [_lineHeight] Кэш высоты строки.
+/// [_currentLine] Текущая визуальная строка курсора.
 class TextEditorState extends State<TextEditor> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _textController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   late EditorState _editorState;
-  int? _lineCount;
+  List<Map<String, dynamic>>?
+  _lineInfo; // Список: {physicalLine: int, visualLines: int}
   double? _lineHeight;
+  int _currentLine = 1;
 
   @override
   void initState() {
@@ -34,10 +37,12 @@ class TextEditorState extends State<TextEditor> {
     _textController.text = _editorState.editorContent;
     _textController.addListener(() {
       _editorState.updateEditorContent(_textController.text);
-      _lineCount = null;
+      _lineInfo = null;
+      _updateCurrentLine();
     });
 
     _editorState.addListener(_updateTextController);
+    _focusNode.addListener(_updateCurrentLine);
   }
 
   @override
@@ -45,6 +50,7 @@ class TextEditorState extends State<TextEditor> {
     super.didChangeDependencies();
     _editorState = Provider.of<EditorState>(context, listen: false);
     _lineHeight = null;
+    _lineInfo = null;
   }
 
   @override
@@ -63,18 +69,82 @@ class TextEditorState extends State<TextEditor> {
       _textController.selection = TextSelection.collapsed(
         offset: _textController.text.length,
       );
-      _lineCount = null;
+      _lineInfo = null;
+      _updateCurrentLine();
     }
+  }
+
+  /// Вычисляет текущую визуальную строку на основе позиции курсора.
+  void _updateCurrentLine() {
+    final text = _textController.text;
+    final selection = _textController.selection;
+    int offset = selection.baseOffset;
+
+    if (offset < 0 || offset > text.length) {
+      offset = text.isEmpty ? 0 : text.length;
+    }
+
+    final lines = text.isEmpty ? [''] : text.split('\n');
+    final availableWidth =
+        MediaQuery.of(context).size.width -
+        56; // Учитываем ширину LineNumberColumn и padding
+    int charCount = 0;
+    int currentPhysicalLine = 0;
+    int visualLineCount = 0;
+
+    for (int i = 0; i < lines.length; i++) {
+      if (charCount + lines[i].length + 1 > offset) {
+        currentPhysicalLine = i;
+        break;
+      }
+      charCount += lines[i].length + 1;
+    }
+
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: lines[currentPhysicalLine],
+        style: const TextStyle(fontSize: 14, height: 1.5),
+      ),
+      textDirection: TextDirection.ltr,
+    );
+    textPainter.layout(maxWidth: availableWidth);
+
+    final lineOffset = offset - charCount;
+    final visualLines = textPainter.computeLineMetrics();
+    int currentVisualLine = 0;
+    int charPos = 0;
+
+    for (var line in visualLines) {
+      final charsInLine = (line.width / textPainter.preferredLineHeight).ceil();
+      if (charPos + charsInLine > lineOffset) {
+        break;
+      }
+      currentVisualLine++;
+      charPos += charsInLine;
+    }
+
+    // Подсчитываем общее количество визуальных строк до текущей физической строки
+    for (int i = 0; i < currentPhysicalLine; i++) {
+      final painter = TextPainter(
+        text: TextSpan(
+          text: lines[i],
+          style: const TextStyle(fontSize: 14, height: 1.5),
+        ),
+        textDirection: TextDirection.ltr,
+      );
+      painter.layout(maxWidth: availableWidth);
+      visualLineCount += painter.computeLineMetrics().length;
+    }
+    visualLineCount += currentVisualLine + 1;
+
+    setState(() {
+      _currentLine = visualLineCount;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final editorState = Provider.of<EditorState>(context);
-    _lineCount ??=
-        editorState.editorContent.isEmpty
-            ? 1
-            : editorState.editorContent.split('\n').length;
-
     const textStyle = TextStyle(fontSize: 14, height: 1.5);
 
     _lineHeight ??= () {
@@ -85,20 +155,55 @@ class TextEditorState extends State<TextEditor> {
       return textPainter.height / 2;
     }();
 
+    _lineInfo ??= () {
+      final availableWidth =
+          MediaQuery.of(context).size.width -
+          56; // Учитываем ширину LineNumberColumn и padding
+      final lines =
+          editorState.editorContent.isEmpty
+              ? ['']
+              : editorState.editorContent.split('\n');
+      List<Map<String, dynamic>> info = [];
+
+      for (int i = 0; i < lines.length; i++) {
+        final textPainter = TextPainter(
+          text: TextSpan(text: lines[i], style: textStyle),
+          textDirection: TextDirection.ltr,
+        );
+        textPainter.layout(maxWidth: availableWidth);
+        info.add({
+          'physicalLine': i + 1,
+          'visualLines': textPainter.computeLineMetrics().length,
+        });
+      }
+
+      return info.isEmpty
+          ? [
+            {'physicalLine': 1, 'visualLines': 1},
+          ]
+          : info;
+    }();
+
     return SingleChildScrollView(
       controller: _scrollController,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           LineNumberColumn(
-            lineCount: _lineCount!,
+            lineInfo: _lineInfo!,
             lineHeight: _lineHeight!,
             textStyle: textStyle,
+            currentLine: _currentLine,
           ),
           Expanded(
             child: ConstrainedBox(
               constraints: BoxConstraints(
-                minHeight: _lineHeight! * _lineCount!,
+                minHeight:
+                    _lineHeight! *
+                    _lineInfo!.fold<int>(
+                      0,
+                      (sum, info) => sum + (info['visualLines'] as int),
+                    ),
               ),
               child: CustomTextField(
                 controller: _textController,

@@ -1,23 +1,28 @@
 import 'package:flutter/material.dart';
 
 /// Виджет для отображения колонки с номерами строк в текстовом редакторе.
-/// [lineCount] Количество строк для отображения.
+/// [lineInfo] Список информации о строках (номер физической строки и количество визуальных строк).
 /// [lineHeight] Высота одной строки.
 /// [textStyle] Стиль текста для номеров строк.
+/// [currentLine] Текущая визуальная строка для подсветки.
 class LineNumberColumn extends StatelessWidget {
-  final int lineCount;
+  final List<Map<String, dynamic>> lineInfo;
   final double lineHeight;
   final TextStyle textStyle;
+  final int currentLine;
 
   const LineNumberColumn({
     super.key,
-    required this.lineCount,
+    required this.lineInfo,
     required this.lineHeight,
     required this.textStyle,
+    required this.currentLine,
   });
 
   @override
   Widget build(BuildContext context) {
+    int visualLineCounter = 0;
+
     return Column(
       children: [
         const SizedBox(height: 4),
@@ -25,22 +30,52 @@ class LineNumberColumn extends StatelessWidget {
           width: 40,
           color: Colors.grey[200],
           child: Column(
-            children: List.generate(
-              lineCount,
-              (index) => SizedBox(
-                height: lineHeight,
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: Text(
-                      '${index + 1}',
-                      style: textStyle.copyWith(color: Colors.grey),
+            children:
+                lineInfo.expand((info) {
+                  final physicalLine = info['physicalLine'] as int;
+                  final visualLines = info['visualLines'] as int;
+                  final List<Widget> widgets = [];
+
+                  // Добавляем номер строки для первой визуальной строки
+                  widgets.add(
+                    SizedBox(
+                      height: lineHeight,
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: Text(
+                            '$physicalLine',
+                            style: textStyle.copyWith(
+                              color:
+                                  visualLineCounter + 1 == currentLine
+                                      ? Colors.black
+                                      : Colors.grey,
+                              fontWeight:
+                                  visualLineCounter + 1 == currentLine
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-              ),
-            ),
+                  );
+
+                  // Добавляем пустое пространство для остальных визуальных строк
+                  for (int i = 1; i < visualLines; i++) {
+                    widgets.add(
+                      SizedBox(
+                        height: lineHeight,
+                        child:
+                            Container(), // Пустой контейнер для визуальных строк
+                      ),
+                    );
+                  }
+
+                  visualLineCounter += visualLines;
+                  return widgets;
+                }).toList(),
           ),
         ),
       ],
