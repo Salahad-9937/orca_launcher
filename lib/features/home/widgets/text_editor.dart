@@ -95,11 +95,13 @@ class TextEditorState extends State<TextEditor> {
 
     // Определяем текущую физическую строку
     for (int i = 0; i < lines.length; i++) {
-      if (charCount + lines[i].length + 1 > offset) {
+      final lineLength = lines[i].length;
+      if (charCount + lineLength + 1 > offset ||
+          (i == lines.length - 1 && offset == charCount + lineLength)) {
         currentPhysicalLine = i;
         break;
       }
-      charCount += lines[i].length + 1;
+      charCount += lineLength + 1;
       final painter = TextPainter(
         text: TextSpan(
           text: lines[i],
@@ -108,13 +110,18 @@ class TextEditorState extends State<TextEditor> {
         textDirection: TextDirection.ltr,
       );
       painter.layout(maxWidth: availableWidth);
-      visualLineCount += painter.computeLineMetrics().length;
+      final metrics = painter.computeLineMetrics();
+      visualLineCount +=
+          metrics.isEmpty
+              ? 1
+              : metrics.length; // Пустая строка имеет 1 визуальную строку
     }
 
     // Вычисляем визуальную строку для текущей физической строки
+    final currentLineText = lines[currentPhysicalLine];
     final textPainter = TextPainter(
       text: TextSpan(
-        text: lines[currentPhysicalLine],
+        text: currentLineText,
         style: const TextStyle(fontSize: 14, height: 1.5),
       ),
       textDirection: TextDirection.ltr,
@@ -126,16 +133,22 @@ class TextEditorState extends State<TextEditor> {
     int currentVisualLine = 0;
     int currentCharPos = 0;
 
-    // Находим визуальную строку, в которой находится курсор
-    for (int i = 0; i < lineMetrics.length; i++) {
-      final metric = lineMetrics[i];
-      final charsInLine =
-          (metric.width / textPainter.preferredLineHeight).ceil();
-      if (currentCharPos + charsInLine > lineOffset) {
-        currentVisualLine = i;
-        break;
+    // Обработка пустых строк или курсора в начале/конце строки
+    if (currentLineText.isEmpty) {
+      currentVisualLine =
+          0; // Для пустой строки всегда первая визуальная строка
+    } else {
+      // Находим визуальную строку, в которой находится курсор
+      for (int i = 0; i < lineMetrics.length; i++) {
+        final metric = lineMetrics[i];
+        final charsInLine =
+            (metric.width / textPainter.preferredLineHeight).ceil();
+        if (currentCharPos + charsInLine > lineOffset) {
+          currentVisualLine = i;
+          break;
+        }
+        currentCharPos += charsInLine;
       }
-      currentCharPos += charsInLine;
     }
 
     // Добавляем визуальные строки текущей физической строки
@@ -175,9 +188,13 @@ class TextEditorState extends State<TextEditor> {
           textDirection: TextDirection.ltr,
         );
         textPainter.layout(maxWidth: availableWidth);
+        final metrics = textPainter.computeLineMetrics();
         info.add({
           'physicalLine': i + 1,
-          'visualLines': textPainter.computeLineMetrics().length,
+          'visualLines':
+              metrics.isEmpty
+                  ? 1
+                  : metrics.length, // Пустая строка имеет 1 визуальную строку
         });
       }
 
