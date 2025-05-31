@@ -107,6 +107,9 @@ class FileMenu extends StatelessWidget {
         MenuItemButton(
           onPressed: () async {
             directoryState.setProjectDirectory(null);
+            if (!directoryState.isProjectPanelVisible) {
+              await directoryState.toggleProjectPanelVisibility();
+            }
             if (context.mounted) {
               ScaffoldMessenger.of(
                 context,

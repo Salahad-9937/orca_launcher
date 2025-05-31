@@ -34,8 +34,7 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
           ),
-          if (directoryState.isProjectPanelVisible &&
-              directoryState.projectDirectory != null)
+          if (directoryState.isProjectPanelVisible)
             Container(
               width: 300,
               decoration: BoxDecoration(
