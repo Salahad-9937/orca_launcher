@@ -155,6 +155,7 @@ class TextEditorState extends State<TextEditor> {
                 lineHeight: _lineHeight!,
                 textStyle: textStyle,
                 currentLine: _currentLine,
+                controller: _textController, // Передаем контроллер
               ),
             ),
           ),
