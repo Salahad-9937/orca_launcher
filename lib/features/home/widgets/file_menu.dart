@@ -106,6 +106,17 @@ class FileMenu extends StatelessWidget {
         ),
         MenuItemButton(
           onPressed: () async {
+            directoryState.setProjectDirectory(null);
+            if (context.mounted) {
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('Проект закрыт')));
+            }
+          },
+          child: const Text('Закрыть проект'),
+        ),
+        MenuItemButton(
+          onPressed: () async {
             if (editorState.currentFilePath != null) {
               final result = await fileHandler.saveExistingFile(
                 editorState.currentFilePath!,
