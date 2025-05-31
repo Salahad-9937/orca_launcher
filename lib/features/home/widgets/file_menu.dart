@@ -88,7 +88,6 @@ class FileMenu extends StatelessWidget {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text('Проект открыт: $path')),
                           );
-                          Navigator.of(context).pop();
                         }
                       },
                       isFilePicker: false,
@@ -98,6 +97,7 @@ class FileMenu extends StatelessWidget {
                               ? Platform.environment['HOME'] ?? '/home'
                               : 'C:\\'),
                       titlePrefix: 'Выберите директорию проекта',
+                      showConfirmButton: true,
                     ),
               ),
             );

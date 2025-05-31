@@ -170,15 +170,19 @@ class FileSystemEntityListState extends State<FileSystemEntityList> {
                 if (isDirectory && isExpanded && widget.isCollapsible)
                   Padding(
                     padding: const EdgeInsets.only(left: 16.0),
-                    child: FileSystemEntityList(
-                      currentPath: entity.path,
-                      isFilePicker: widget.isFilePicker,
-                      showHidden: widget.showHidden,
-                      searchQuery: widget.searchQuery,
-                      onPathSelected: widget.onPathSelected,
-                      onNavigateBack: () {},
-                      allowedExtensions: widget.allowedExtensions,
-                      isCollapsible: true,
+                    child: Column(
+                      children: [
+                        FileSystemEntityList(
+                          currentPath: entity.path,
+                          isFilePicker: widget.isFilePicker,
+                          showHidden: widget.showHidden,
+                          searchQuery: widget.searchQuery,
+                          onPathSelected: widget.onPathSelected,
+                          onNavigateBack: () {},
+                          allowedExtensions: widget.allowedExtensions,
+                          isCollapsible: true,
+                        ),
+                      ],
                     ),
                   ),
               ],

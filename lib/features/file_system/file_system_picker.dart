@@ -55,17 +55,21 @@ class FileSystemPickerState extends State<FileSystemPicker> {
     _searchSubject.debounceTime(const Duration(milliseconds: 300)).listen((
       query,
     ) {
-      setState(() {
-        _searchQuery = query;
-      });
+      if (mounted) {
+        setState(() {
+          _searchQuery = query;
+        });
+      }
     });
   }
 
   Future<void> _initCurrentPath() async {
     final initialPath = await FileUtils.getInitialPath(widget.initialPath);
-    setState(() {
-      _currentPath = initialPath;
-    });
+    if (mounted) {
+      setState(() {
+        _currentPath = initialPath;
+      });
+    }
   }
 
   void _navigateBack() {
@@ -138,9 +142,6 @@ class FileSystemPickerState extends State<FileSystemPicker> {
               _searchQuery = '';
               _searchSubject.add('');
             });
-            if (!widget.isFilePicker) {
-              widget.onPathSelected(path);
-            }
           }
         },
         onNavigateBack: _navigateBack,
