@@ -76,6 +76,35 @@ class FileMenu extends StatelessWidget {
           child: const Text('Открыть'),
         ),
         MenuItemButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder:
+                    (context) => FileSystemPicker(
+                      onPathSelected: (path) async {
+                        directoryState.setProjectDirectory(path);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Проект открыт: $path')),
+                          );
+                          Navigator.of(context).pop();
+                        }
+                      },
+                      isFilePicker: false,
+                      initialPath:
+                          directoryState.workingDirectory ??
+                          (Platform.isLinux
+                              ? Platform.environment['HOME'] ?? '/home'
+                              : 'C:\\'),
+                      titlePrefix: 'Выберите директорию проекта',
+                    ),
+              ),
+            );
+          },
+          child: const Text('Открыть проект'),
+        ),
+        MenuItemButton(
           onPressed: () async {
             if (editorState.currentFilePath != null) {
               final result = await fileHandler.saveExistingFile(

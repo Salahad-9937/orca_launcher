@@ -12,6 +12,7 @@ import '../../core/utils/file_utils.dart';
 /// [onNavigateBack] Коллбэк для перехода в родительскую директорию.
 /// [allowedExtensions] Список разрешённых расширений файлов.
 /// [refreshKey] Ключ для принудительного обновления списка.
+/// [isCollapsible] Флаг, включающий поддержку сворачивания директорий.
 class FileSystemEntityList extends StatefulWidget {
   final String currentPath;
   final bool isFilePicker;
@@ -21,6 +22,7 @@ class FileSystemEntityList extends StatefulWidget {
   final VoidCallback onNavigateBack;
   final List<String>? allowedExtensions;
   final Object? refreshKey;
+  final bool isCollapsible;
 
   const FileSystemEntityList({
     super.key,
@@ -32,6 +34,7 @@ class FileSystemEntityList extends StatefulWidget {
     required this.onNavigateBack,
     this.allowedExtensions,
     this.refreshKey,
+    this.isCollapsible = false,
   });
 
   @override
@@ -45,9 +48,11 @@ class FileSystemEntityList extends StatefulWidget {
 /// [_hasMore] Флаг наличия дополнительных элементов для загрузки.
 /// [_page] Текущая страница для пагинации.
 /// [_pageSize] Количество элементов на странице.
+/// [_expandedDirectories] Множество развернутых директорий.
 class FileSystemEntityListState extends State<FileSystemEntityList> {
   final ScrollController _scrollController = ScrollController();
   final List<FileSystemEntity> _entities = [];
+  final Set<String> _expandedDirectories = {};
   bool _isLoading = false;
   bool _hasMore = true;
   int _page = 0;
@@ -104,6 +109,17 @@ class FileSystemEntityListState extends State<FileSystemEntityList> {
     });
   }
 
+  /// Переключает состояние сворачивания/разворачивания директории.
+  void _toggleDirectory(String path) {
+    setState(() {
+      if (_expandedDirectories.contains(path)) {
+        _expandedDirectories.remove(path);
+      } else {
+        _expandedDirectories.add(path);
+      }
+    });
+  }
+
   @override
   void dispose() {
     _scrollController.dispose();
@@ -125,12 +141,47 @@ class FileSystemEntityListState extends State<FileSystemEntityList> {
               );
             }
             final entity = _entities[index - 1];
-            return ListTile(
-              leading: Icon(entity is File ? Icons.file_open : Icons.folder),
-              title: Text(p.basename(entity.path)),
-              onTap: () {
-                widget.onPathSelected(entity.path);
-              },
+            final isDirectory = entity is Directory;
+            final isExpanded = _expandedDirectories.contains(entity.path);
+
+            return Column(
+              children: [
+                ListTile(
+                  leading: Icon(
+                    isDirectory
+                        ? (isExpanded ? Icons.folder_open : Icons.folder)
+                        : Icons.file_open,
+                  ),
+                  title: Text(p.basename(entity.path)),
+                  trailing:
+                      widget.isCollapsible && isDirectory
+                          ? Icon(
+                            isExpanded ? Icons.expand_less : Icons.expand_more,
+                          )
+                          : null,
+                  onTap: () {
+                    if (isDirectory && widget.isCollapsible) {
+                      _toggleDirectory(entity.path);
+                    } else {
+                      widget.onPathSelected(entity.path);
+                    }
+                  },
+                ),
+                if (isDirectory && isExpanded && widget.isCollapsible)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 16.0),
+                    child: FileSystemEntityList(
+                      currentPath: entity.path,
+                      isFilePicker: widget.isFilePicker,
+                      showHidden: widget.showHidden,
+                      searchQuery: widget.searchQuery,
+                      onPathSelected: widget.onPathSelected,
+                      onNavigateBack: () {},
+                      allowedExtensions: widget.allowedExtensions,
+                      isCollapsible: true,
+                    ),
+                  ),
+              ],
             );
           }, childCount: _entities.length + 1),
         ),
