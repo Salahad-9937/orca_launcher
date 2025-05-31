@@ -1,5 +1,3 @@
-// ignore_for_file: avoid_print
-
 import 'package:flutter/material.dart';
 
 /// Класс для обработки событий мыши в текстовом поле.
@@ -34,27 +32,18 @@ class MouseEventHandler {
     BuildContext context, {
     bool isDoubleTap = false,
   }) {
-    print(
-      'handleTap: Получен ${isDoubleTap ? "двойной" : "одиночный"} тап в позиции ${details.globalPosition}',
-    );
     focusNode.requestFocus();
     _updateSelection(details, context, isDoubleTap: isDoubleTap);
   }
 
   /// Обрабатывает начало перетаскивания мыши.
   void handleDragStart(DragStartDetails details, BuildContext context) {
-    print(
-      'handleDragStart: Начало перетаскивания в позиции ${details.globalPosition}',
-    );
     focusNode.requestFocus();
     _updateSelection(details, context, isDragStart: true);
   }
 
   /// Обрабатывает событие перетаскивания мыши для выделения текста.
   void handleDragUpdate(DragUpdateDetails details, BuildContext context) {
-    print(
-      'handleDragUpdate: Обновление перетаскивания в позиции ${details.globalPosition}',
-    );
     _updateSelection(details, context);
   }
 
@@ -69,17 +58,12 @@ class MouseEventHandler {
     bool isDoubleTap = false,
     bool isDragStart = false,
   }) {
-    print(
-      '_updateSelection: Начало обработки события, isDoubleTap=$isDoubleTap, isDragStart=$isDragStart',
-    );
     final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
     if (renderBox == null) {
-      print('_updateSelection: RenderBox не найден, обработка прервана');
       return;
     }
 
     final localPosition = renderBox.globalToLocal(details.globalPosition);
-    print('_updateSelection: Локальная позиция курсора: $localPosition');
     final text = controller.text.isEmpty ? ' ' : controller.text;
     final effectiveStyle =
         style?.copyWith(overflow: TextOverflow.visible, color: Colors.black) ??
@@ -90,26 +74,26 @@ class MouseEventHandler {
       textDirection: TextDirection.ltr,
     )..layout(maxWidth: renderBox.size.width);
 
-    // Корректировка позиции с учётом прокрутки
+    // Корректировка позиции с учётом прокрутки и отступов контейнера
     final verticalScrollOffset =
         verticalScrollController.hasClients
             ? verticalScrollController.position.pixels
             : 0.0;
+
+    // Учитываем отступ контейнера (padding: EdgeInsets.symmetric(vertical: 8, horizontal: 8))
+    const containerPaddingTop = 8.0;
+    const containerPaddingLeft = 8.0;
+
     final adjustedPosition = Offset(
-      localPosition.dx,
-      localPosition.dy + verticalScrollOffset,
+      localPosition.dx - containerPaddingLeft,
+      localPosition.dy - containerPaddingTop + verticalScrollOffset,
     );
-    print('_updateSelection: Скорректированная позиция: $adjustedPosition');
 
     final offset = textPainter.getPositionForOffset(adjustedPosition);
     int newOffset = offset.offset.clamp(0, controller.text.length);
-    print('_updateSelection: Вычисленный offset: $newOffset');
 
     if (details is TapDownDetails) {
       final now = DateTime.now();
-      print(
-        '_updateSelection: Текущее время: $now, последний тап: $_lastTapTime',
-      );
 
       // Проверка на последовательные тапы
       bool isWithinTapWindow =
@@ -121,7 +105,6 @@ class MouseEventHandler {
 
       if (isDoubleTap && isWithinTapWindow) {
         // Тройной тап: выделение строки
-        print('_updateSelection: Обработка тройного тапа');
         _tapCount = 3;
         final lineRange = _getLineRange(newOffset, text);
         controller.selection = TextSelection(
@@ -129,12 +112,8 @@ class MouseEventHandler {
           extentOffset: lineRange.end,
         );
         newOffset = lineRange.end;
-        print(
-          '_updateSelection: Выделена строка, диапазон: ${lineRange.start}-${lineRange.end}',
-        );
       } else if (isDoubleTap) {
         // Двойной тап: выделение слова
-        print('_updateSelection: Обработка двойного тапа');
         _tapCount = 2;
         final wordRange = _getWordRange(newOffset, text);
         controller.selection = TextSelection(
@@ -142,12 +121,8 @@ class MouseEventHandler {
           extentOffset: wordRange.end,
         );
         newOffset = wordRange.end;
-        print(
-          '_updateSelection: Выделено слово, диапазон: ${wordRange.start}-${wordRange.end}',
-        );
       } else if (isWithinTapWindow && _tapCount == 2) {
         // Тройной тап после двойного
-        print('_updateSelection: Обработка тройного тапа после двойного');
         _tapCount = 3;
         final lineRange = _getLineRange(newOffset, text);
         controller.selection = TextSelection(
@@ -155,33 +130,20 @@ class MouseEventHandler {
           extentOffset: lineRange.end,
         );
         newOffset = lineRange.end;
-        print(
-          '_updateSelection: Выделена строка, диапазон: ${lineRange.start}-${lineRange.end}',
-        );
       } else {
         // Одиночный тап: установка курсора
-        print('_updateSelection: Обработка одиночного тапа');
         _tapCount = 1;
         controller.selection = TextSelection.collapsed(offset: newOffset);
-        print('_updateSelection: Курсор установлен на позицию: $newOffset');
       }
 
       _lastTapTime = now;
       _lastTapPosition = localPosition;
-      print(
-        '_updateSelection: Обновлены _lastTapTime: $_lastTapTime, _lastTapPosition: $_lastTapPosition',
-      );
     } else if (details is DragStartDetails || isDragStart) {
       // Начало перетаскивания: установка начальной точки выделения
-      print(
-        '_updateSelection: Начало перетаскивания, установка начальной точки',
-      );
       controller.selection = TextSelection.collapsed(offset: newOffset);
       _tapCount = 0; // Сбрасываем счётчик тапов
-      print('_updateSelection: Сброс _tapCount, курсор на $newOffset');
     } else if (details is DragUpdateDetails) {
       // Перетаскивание: обновление выделения от начальной точки
-      print('_updateSelection: Обновление перетаскивания');
       final currentSelection = controller.selection;
       controller.selection = TextSelection(
         baseOffset:
@@ -190,12 +152,8 @@ class MouseEventHandler {
                 : newOffset,
         extentOffset: newOffset,
       );
-      print(
-        '_updateSelection: Обновлено выделение, baseOffset: ${controller.selection.baseOffset}, extentOffset: $newOffset',
-      );
     }
 
-    print('_updateSelection: Прокрутка к позиции курсора: $newOffset');
     scrollToCursor(newOffset);
   }
 
@@ -203,9 +161,7 @@ class MouseEventHandler {
   /// [offset] Позиция курсора.
   /// [text] Текст для анализа.
   TextRange _getWordRange(int offset, String text) {
-    print('_getWordRange: Вычисление диапазона слова для offset: $offset');
     if (text.isEmpty) {
-      print('_getWordRange: Текст пуст, возвращён диапазон 0-0');
       return const TextRange(start: 0, end: 0);
     }
 
@@ -221,7 +177,6 @@ class MouseEventHandler {
       end++;
     }
 
-    print('_getWordRange: Диапазон слова: $start-$end');
     return TextRange(start: start, end: end);
   }
 
@@ -229,9 +184,7 @@ class MouseEventHandler {
   /// [offset] Позиция курсора.
   /// [text] Текст для анализа.
   TextRange _getLineRange(int offset, String text) {
-    print('_getLineRange: Вычисление диапазона строки для offset: $offset');
     if (text.isEmpty) {
-      print('_getLineRange: Текст пуст, возвращён диапазон 0-0');
       return const TextRange(start: 0, end: 0);
     }
 
@@ -247,16 +200,12 @@ class MouseEventHandler {
       end++;
     }
 
-    print('_getLineRange: Диапазон строки: $start-$end');
     return TextRange(start: start, end: end);
   }
 
   /// Проверяет, является ли символ границей слова.
   bool _isWordBoundary(String char) {
     final isBoundary = RegExp(r'[\s,.!?;:]').hasMatch(char);
-    print(
-      '_isWordBoundary: Символ "$char" ${isBoundary ? "является" : "не является"} границей слова',
-    );
     return isBoundary;
   }
 }
