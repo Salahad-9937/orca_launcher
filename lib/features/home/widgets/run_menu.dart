@@ -31,7 +31,9 @@ class RunMenu extends StatelessWidget {
               }
               return;
             }
-            if (editorState.currentFilePath == null) {
+
+            // Проверяем, есть ли активная вкладка
+            if (!editorState.hasActiveFile) {
               if (context.mounted) {
                 ErrorDisplay.showError(
                   context,
@@ -43,6 +45,20 @@ class RunMenu extends StatelessWidget {
               }
               return;
             }
+
+            if (editorState.currentFilePath == null) {
+              if (context.mounted) {
+                ErrorDisplay.showError(
+                  context,
+                  AppError(
+                    'Файл должен быть сохранен перед запуском',
+                    type: ErrorType.generic,
+                  ),
+                );
+              }
+              return;
+            }
+
             if (!editorState.currentFileName.endsWith('.inp')) {
               if (context.mounted) {
                 ErrorDisplay.showError(
@@ -55,13 +71,21 @@ class RunMenu extends StatelessWidget {
               }
               return;
             }
+
             final bool? confirm = await showDialog<bool>(
               context: context,
               builder:
                   (context) => AlertDialog(
                     title: const Text('Подтверждение запуска'),
-                    content: Text(
-                      'Запустить ORCA для файла ${editorState.currentFileName}?',
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Запустить ORCA для файла ${editorState.currentFileName}?',
+                        ),
+                        SizedBox(height: 12),
+                        Text('Внимание, Файл будет сохранён!'),
+                      ],
                     ),
                     actions: [
                       TextButton(
@@ -76,12 +100,14 @@ class RunMenu extends StatelessWidget {
                   ),
             );
             if (confirm != true || !context.mounted) return;
+
             final saveResult = await fileHandler.saveExistingFile(
               editorState.currentFilePath!,
               editorState.currentFileName,
               editorState.editorContent,
             );
             if (!context.mounted) return;
+
             saveResult.fold((error) => ErrorDisplay.showError(context, error), (
               _,
             ) async {
@@ -107,7 +133,7 @@ class RunMenu extends StatelessWidget {
               );
             });
           },
-          child: const Text('Запуск'),
+          child: const Text('Запуск из вкладки'),
         ),
         MenuItemButton(
           onPressed: () {

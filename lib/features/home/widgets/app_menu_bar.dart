@@ -5,11 +5,8 @@ import 'help_menu.dart';
 import 'view_menu.dart';
 
 /// Виджет панели меню приложения.
-/// [title] Заголовок меню.
 class AppMenuBar extends StatelessWidget {
-  final String title;
-
-  const AppMenuBar({super.key, required this.title});
+  const AppMenuBar({super.key});
 
   @override
   Widget build(BuildContext context) {

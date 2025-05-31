@@ -24,9 +24,7 @@ class FileMenu extends StatelessWidget {
       menuChildren: [
         MenuItemButton(
           onPressed: () {
-            editorState.updateEditorContent('');
-            editorState.setCurrentFileName('Безымянный');
-            editorState.setCurrentFilePath(null);
+            editorState.createNewFile();
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Создан новый файл')),
@@ -48,17 +46,11 @@ class FileMenu extends StatelessWidget {
                         result.fold(
                           (error) => ErrorDisplay.showError(context, error),
                           (content) {
-                            editorState.updateEditorContent(content);
-                            editorState.setCurrentFileName(
-                              path.split(Platform.pathSeparator).last,
-                            );
-                            editorState.setCurrentFilePath(path);
+                            final fileName =
+                                path.split(Platform.pathSeparator).last;
+                            editorState.openFile(fileName, path, content);
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  'Файл открыт: ${editorState.currentFileName}',
-                                ),
-                              ),
+                              SnackBar(content: Text('Файл открыт: $fileName')),
                             );
                           },
                         );
@@ -120,44 +112,50 @@ class FileMenu extends StatelessWidget {
           child: const Text('Закрыть проект'),
         ),
         MenuItemButton(
-          onPressed: () async {
-            if (editorState.currentFilePath != null) {
-              final result = await fileHandler.saveExistingFile(
-                editorState.currentFilePath!,
-                editorState.currentFileName,
-                editorState.editorContent,
-              );
-              if (!context.mounted) return;
-              result.fold(
-                (error) => ErrorDisplay.showError(context, error),
-                (_) => ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'Файл сохранён: ${editorState.currentFileName}',
-                    ),
-                  ),
-                ),
-              );
-            } else {
-              _showSaveAsDialog(
-                context,
-                editorState,
-                directoryState,
-                fileHandler,
-              );
-            }
-          },
+          onPressed:
+              editorState.hasActiveFile
+                  ? () async {
+                    if (editorState.currentFilePath != null) {
+                      final result = await fileHandler.saveExistingFile(
+                        editorState.currentFilePath!,
+                        editorState.currentFileName,
+                        editorState.editorContent,
+                      );
+                      if (!context.mounted) return;
+                      result.fold(
+                        (error) => ErrorDisplay.showError(context, error),
+                        (_) => ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Файл сохранён: ${editorState.currentFileName}',
+                            ),
+                          ),
+                        ),
+                      );
+                    } else {
+                      _showSaveAsDialog(
+                        context,
+                        editorState,
+                        directoryState,
+                        fileHandler,
+                      );
+                    }
+                  }
+                  : null,
           child: const Text('Сохранить'),
         ),
         MenuItemButton(
-          onPressed: () {
-            _showSaveAsDialog(
-              context,
-              editorState,
-              directoryState,
-              fileHandler,
-            );
-          },
+          onPressed:
+              editorState.hasActiveFile
+                  ? () {
+                    _showSaveAsDialog(
+                      context,
+                      editorState,
+                      directoryState,
+                      fileHandler,
+                    );
+                  }
+                  : null,
           child: const Text('Сохранить как'),
         ),
         MenuItemButton(
@@ -181,10 +179,6 @@ class FileMenu extends StatelessWidget {
   }
 
   /// Открывает диалог "Сохранить как" для сохранения файла.
-  /// [context] Контекст для отображения диалога.
-  /// [editorState] Состояние редактора.
-  /// [directoryState] Состояние директорий.
-  /// [fileHandler] Обработчик файлов.
   void _showSaveAsDialog(
     BuildContext context,
     EditorState editorState,

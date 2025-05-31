@@ -48,15 +48,16 @@ class ProjectDirectoryPanel extends StatelessWidget {
                             context,
                             listen: false,
                           );
-                          editorState.updateEditorContent(content);
-                          editorState.setCurrentFileName(
+                          // Используем метод openFile для создания новой вкладки
+                          editorState.openFile(
                             path.split(Platform.pathSeparator).last,
+                            path,
+                            content,
                           );
-                          editorState.setCurrentFilePath(path);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                'Файл открыт: ${editorState.currentFileName}',
+                                'Файл открыт: ${path.split(Platform.pathSeparator).last}',
                               ),
                             ),
                           );
