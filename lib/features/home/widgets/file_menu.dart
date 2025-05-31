@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../core/models/editor_state.dart';
 import '../../../core/models/directory_state.dart';
@@ -170,7 +171,7 @@ class FileMenu extends StatelessWidget {
         ),
         MenuItemButton(
           onPressed: () {
-            Navigator.of(context).pop();
+            SystemNavigator.pop();
           },
           child: const Text('Выход'),
         ),
