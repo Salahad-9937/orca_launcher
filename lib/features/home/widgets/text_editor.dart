@@ -141,30 +141,32 @@ class TextEditorState extends State<TextEditor> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          width: 56,
-          height: MediaQuery.of(context).size.height,
-          child: ScrollConfiguration(
-            behavior: ScrollConfiguration.of(
-              context,
-            ).copyWith(scrollbars: false),
-            child: SingleChildScrollView(
-              controller: _lineNumberScrollController,
-              child: LineNumberColumn(
-                lineInfo: _lineInfo!,
-                lineHeight: _lineHeight!,
-                textStyle: textStyle,
-                currentLine: _currentLine,
-                controller: _textController, // Передаем контроллер
+        if (editorState.showLineNumbers)
+          SizedBox(
+            width: 56,
+            height: MediaQuery.of(context).size.height,
+            child: ScrollConfiguration(
+              behavior: ScrollConfiguration.of(
+                context,
+              ).copyWith(scrollbars: false),
+              child: SingleChildScrollView(
+                controller: _lineNumberScrollController,
+                child: LineNumberColumn(
+                  lineInfo: _lineInfo!,
+                  lineHeight: _lineHeight!,
+                  textStyle: textStyle,
+                  currentLine: _currentLine,
+                  controller: _textController,
+                ),
               ),
             ),
           ),
-        ),
         Expanded(
           child: SizedBox(
             width:
-                MediaQuery.of(context).size.width -
-                56, // Учитываем LineNumberColumn
+                editorState.showLineNumbers
+                    ? MediaQuery.of(context).size.width - 56
+                    : MediaQuery.of(context).size.width,
             height: MediaQuery.of(context).size.height,
             child: CustomFileTextField(
               controller: _textController,

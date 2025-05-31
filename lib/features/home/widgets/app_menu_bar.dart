@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'file_menu.dart';
 import 'run_menu.dart';
 import 'help_menu.dart';
+import 'view_menu.dart';
 
 /// Виджет панели меню приложения.
 /// [title] Заголовок меню.
@@ -12,6 +13,6 @@ class AppMenuBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MenuBar(children: [FileMenu(), RunMenu(), HelpMenu()]);
+    return MenuBar(children: [FileMenu(), ViewMenu(), RunMenu(), HelpMenu()]);
   }
 }

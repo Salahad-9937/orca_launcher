@@ -4,14 +4,17 @@ import 'package:flutter/material.dart';
 /// [_editorContent] Содержимое редактора.
 /// [_currentFileName] Имя текущего файла.
 /// [_currentFilePath] Путь к текущему файлу.
+/// [_showLineNumbers] Флаг отображения номеров строк.
 class EditorState extends ChangeNotifier {
   String _editorContent = '';
   String _currentFileName = 'Безымянный';
   String? _currentFilePath;
+  bool _showLineNumbers = true; // По умолчанию нумерация включена
 
   String get editorContent => _editorContent;
   String get currentFileName => _currentFileName;
   String? get currentFilePath => _currentFilePath;
+  bool get showLineNumbers => _showLineNumbers;
 
   /// Обновляет содержимое редактора и уведомляет слушателей, если содержимое изменилось.
   /// [content] Новое содержимое редактора.
@@ -38,5 +41,11 @@ class EditorState extends ChangeNotifier {
       _currentFilePath = path;
       notifyListeners();
     }
+  }
+
+  /// Переключает состояние отображения номеров строк и уведомляет слушателей.
+  void toggleLineNumbers() {
+    _showLineNumbers = !_showLineNumbers;
+    notifyListeners();
   }
 }
