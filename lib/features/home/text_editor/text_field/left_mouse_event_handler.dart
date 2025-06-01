@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 /// [scrollToCursor] Функция для прокрутки к позиции курсора.
 /// [style] Стиль текста для синхронизации с TextPainter.
 /// [verticalScrollController] Контроллер вертикальной прокрутки для учёта смещения.
-class MouseEventHandler {
+class LeftMouseEventHandler {
   final TextEditingController controller;
   final FocusNode focusNode;
   final void Function(int) scrollToCursor;
@@ -18,7 +18,7 @@ class MouseEventHandler {
   static const _tapTimeout = Duration(milliseconds: 300);
   static const _tapProximityThreshold = 20.0;
 
-  MouseEventHandler({
+  LeftMouseEventHandler({
     required this.controller,
     required this.focusNode,
     required this.scrollToCursor,

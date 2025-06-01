@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'scroll_handler.dart';
 import 'key_event_handler.dart';
-import 'mouse_event_handler.dart';
+import 'left_mouse_event_handler.dart';
 import 'text_painter_utils.dart';
+import 'right_mouse_event_handler.dart';
 
 /// Виджет текстового поля с поддержкой кастомизации и управления прокруткой.
 /// [controller] Контроллер для управления текстом.
@@ -50,7 +50,8 @@ class CustomFileTextField extends StatefulWidget {
 /// [_verticalScrollController] Контроллер вертикальной прокрутки.
 /// [_scrollHandler] Обработчик прокрутки.
 /// [_keyEventHandler] Обработчик событий клавиатуры.
-/// [_mouseEventHandler] Обработчик событий мыши.
+/// [_leftMouseEventHandler] Обработчик событий левой кнопки мыши.
+/// [_rightMouseEventHandler] Обработчик событий правой кнопкимыши.
 class CustomFileTextFieldState extends State<CustomFileTextField> {
   late TextEditingController _effectiveController;
   late FocusNode _effectiveFocusNode;
@@ -58,7 +59,8 @@ class CustomFileTextFieldState extends State<CustomFileTextField> {
   late ScrollController _verticalScrollController;
   late ScrollHandler _scrollHandler;
   late KeyEventHandler _keyEventHandler;
-  late MouseEventHandler _mouseEventHandler;
+  late LeftMouseEventHandler _leftMouseEventHandler;
+  late RightMouseEventHandler _rightMouseEventHandler;
 
   @override
   void initState() {
@@ -79,12 +81,16 @@ class CustomFileTextFieldState extends State<CustomFileTextField> {
       controller: _effectiveController,
       scrollToCursor: _scrollHandler.scrollToCursor,
     );
-    _mouseEventHandler = MouseEventHandler(
+    _leftMouseEventHandler = LeftMouseEventHandler(
       controller: _effectiveController,
       focusNode: _effectiveFocusNode,
       scrollToCursor: _scrollHandler.scrollToCursor,
       style: widget.style,
       verticalScrollController: _verticalScrollController,
+    );
+    _rightMouseEventHandler = RightMouseEventHandler(
+      controller: _effectiveController,
+      focusNode: _effectiveFocusNode,
     );
 
     _effectiveFocusNode.addListener(() {
@@ -121,78 +127,6 @@ class CustomFileTextFieldState extends State<CustomFileTextField> {
     super.dispose();
   }
 
-  /// Показывает контекстное меню при правом клике.
-  void _showContextMenu(BuildContext context, Offset globalPosition) {
-    final RenderBox overlay =
-        Overlay.of(context).context.findRenderObject() as RenderBox;
-    final selection = _effectiveController.selection;
-    final hasSelection = selection.isValid && !selection.isCollapsed;
-
-    showMenu(
-      context: context,
-      position: RelativeRect.fromRect(
-        Rect.fromPoints(globalPosition, globalPosition),
-        Offset.zero & overlay.size,
-      ),
-      items: [
-        PopupMenuItem(
-          enabled: hasSelection,
-          onTap: () {
-            final selectedText = _effectiveController.text.substring(
-              selection.start,
-              selection.end,
-            );
-            Clipboard.setData(ClipboardData(text: selectedText));
-          },
-          child: const Text('Копировать'),
-        ),
-        PopupMenuItem(
-          enabled: true,
-          onTap: () async {
-            final clipboardData = await Clipboard.getData(Clipboard.kTextPlain);
-            if (clipboardData != null && clipboardData.text != null) {
-              final currentText = _effectiveController.text;
-              final selection = _effectiveController.selection;
-              final newText = currentText.replaceRange(
-                selection.start,
-                selection.end,
-                clipboardData.text!,
-              );
-              _effectiveController.value = TextEditingValue(
-                text: newText,
-                selection: TextSelection.collapsed(
-                  offset: selection.start + clipboardData.text!.length,
-                ),
-              );
-            }
-          },
-          child: const Text('Вставить'),
-        ),
-        PopupMenuItem(
-          enabled: hasSelection,
-          onTap: () {
-            final selectedText = _effectiveController.text.substring(
-              selection.start,
-              selection.end,
-            );
-            Clipboard.setData(ClipboardData(text: selectedText));
-            final currentText = _effectiveController.text;
-            final newText = currentText.replaceRange(
-              selection.start,
-              selection.end,
-              '',
-            );
-            _effectiveController.value = TextEditingValue(
-              text: newText,
-              selection: TextSelection.collapsed(offset: selection.start),
-            );
-          },
-          child: const Text('Вырезать'),
-        ),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Focus(
@@ -211,21 +145,24 @@ class CustomFileTextFieldState extends State<CustomFileTextField> {
 
           return GestureDetector(
             onTapDown:
-                (details) => _mouseEventHandler.handleTap(details, context),
+                (details) => _leftMouseEventHandler.handleTap(details, context),
             onDoubleTapDown:
-                (details) => _mouseEventHandler.handleTap(
+                (details) => _leftMouseEventHandler.handleTap(
                   details,
                   context,
                   isDoubleTap: true,
                 ),
             onPanStart:
                 (details) =>
-                    _mouseEventHandler.handleDragStart(details, context),
+                    _leftMouseEventHandler.handleDragStart(details, context),
             onPanUpdate:
                 (details) =>
-                    _mouseEventHandler.handleDragUpdate(details, context),
+                    _leftMouseEventHandler.handleDragUpdate(details, context),
             onSecondaryTapDown:
-                (details) => _showContextMenu(context, details.globalPosition),
+                (details) => _rightMouseEventHandler.showContextMenu(
+                  context,
+                  details.globalPosition,
+                ),
             child: Container(
               decoration: BoxDecoration(
                 border: Border.all(color: Theme.of(context).dividerColor),
