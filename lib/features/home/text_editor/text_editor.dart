@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/models/editor_state.dart';
 import '../../../core/widgets/custom_file_text_field.dart';
-import '../components/line_number_column.dart';
+import 'line_number_column.dart';
 
 /// Виджет текстового редактора с колонкой номеров строк.
 class TextEditor extends StatefulWidget {

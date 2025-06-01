@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/models/directory_state.dart';
-import 'widgets/app_menu_bar.dart';
-import 'widgets/text_editor.dart';
-import 'widgets/editor_tabs.dart';
-import 'components/project_directory_panel.dart';
-import 'widgets/toolbar.dart';
+import 'menu_bar/app_menu_bar.dart';
+import 'text_editor/text_editor.dart';
+import 'text_editor/editor_tabs.dart';
+import 'toolbar/project_directory_panel.dart';
+import 'toolbar/toolbar.dart';
 
 /// Главный экран приложения с текстовым редактором, меню и панелью директорий.
 class HomeScreen extends StatelessWidget {
