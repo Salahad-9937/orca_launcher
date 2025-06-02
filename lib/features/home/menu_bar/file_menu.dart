@@ -25,11 +25,6 @@ class FileMenu extends StatelessWidget {
         MenuItemButton(
           onPressed: () {
             editorState.createNewFile();
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Создан новый файл')),
-              );
-            }
           },
           child: const Text('Создать'),
         ),
@@ -49,9 +44,6 @@ class FileMenu extends StatelessWidget {
                             final fileName =
                                 path.split(Platform.pathSeparator).last;
                             editorState.openFile(fileName, path, content);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Файл открыт: $fileName')),
-                            );
                           },
                         );
                       },
@@ -77,11 +69,6 @@ class FileMenu extends StatelessWidget {
                     (context) => FileSystemPicker(
                       onPathSelected: (path) async {
                         directoryState.setProjectDirectory(path);
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Проект открыт: $path')),
-                          );
-                        }
                       },
                       isFilePicker: false,
                       initialPath:
@@ -102,11 +89,6 @@ class FileMenu extends StatelessWidget {
             directoryState.setProjectDirectory(null);
             if (!directoryState.isProjectPanelVisible) {
               await directoryState.toggleProjectPanelVisibility();
-            }
-            if (context.mounted) {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(const SnackBar(content: Text('Проект закрыт')));
             }
           },
           child: const Text('Закрыть проект'),

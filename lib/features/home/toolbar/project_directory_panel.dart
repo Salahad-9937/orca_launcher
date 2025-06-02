@@ -54,13 +54,6 @@ class ProjectDirectoryPanel extends StatelessWidget {
                             path,
                             content,
                           );
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                'Файл открыт: ${path.split(Platform.pathSeparator).last}',
-                              ),
-                            ),
-                          );
                         },
                       );
                     },
@@ -88,17 +81,6 @@ class ProjectDirectoryPanel extends StatelessWidget {
                                         directoryState.setProjectDirectory(
                                           path,
                                         );
-                                        if (context.mounted) {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                'Проект открыт: $path',
-                                              ),
-                                            ),
-                                          );
-                                        }
                                       },
                                       isFilePicker: false,
                                       initialPath:

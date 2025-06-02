@@ -80,9 +80,6 @@ class SaveFileScreenState extends State<SaveFileScreen> {
 
     result.fold((error) => ErrorDisplay.showError(context, error), (filePath) {
       widget.onSave(_selectedPath!, fileName);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Файл сохранён: $fileName')));
       Navigator.of(context).pop();
     });
   }
